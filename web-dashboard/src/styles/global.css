@@ -1351,36 +1351,53 @@ select {
 }
 
 .sidebar-toggle-btn {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 34px;
-  height: 34px;
-  min-width: 34px;
-  padding: 9px 7px;
-  background: var(--panel-raised);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 3.5px !important;
+  width: 38px !important;
+  height: 38px !important;
+  min-width: 38px !important;
+  padding: 0 !important;
+  background: rgba(225, 29, 72, 0.08) !important;
+  border: 1.5px solid rgba(225, 29, 72, 0.28) !important;
+  border-radius: 9px !important;
+  cursor: pointer !important;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+  flex-shrink: 0 !important;
 }
 
-.sidebar-toggle-btn:hover {
-  border-color: var(--brand);
-  background: var(--brand-bg);
+[data-theme="dark"] .sidebar-toggle-btn {
+  background: rgba(225, 29, 72, 0.14) !important;
+  border-color: rgba(225, 29, 72, 0.35) !important;
+}
+
+.sidebar-toggle-btn:hover,
+.sidebar-toggle-btn:active {
+  background: var(--brand) !important;
+  border-color: var(--brand) !important;
+  transform: scale(0.96);
+  box-shadow: 0 2px 8px var(--brand-glow) !important;
 }
 
 .hamburger-line {
-  width: 100%;
-  height: 2px;
-  background: var(--text-secondary);
-  border-radius: 2px;
-  transition: background 0.15s;
+  display: block !important;
+  width: 17px !important;
+  height: 2.5px !important;
+  background: #4a151e !important;
+  border-radius: 999px !important;
+  transition: all 0.18s ease !important;
 }
 
-.sidebar-toggle-btn:hover .hamburger-line {
-  background: var(--brand-light);
+[data-theme="dark"] .hamburger-line {
+  background: #fecdd3 !important;
+}
+
+.sidebar-toggle-btn:hover .hamburger-line,
+.sidebar-toggle-btn:active .hamburger-line {
+  background: #ffffff !important;
 }
 
 .header-page-title {
@@ -6780,18 +6797,19 @@ html, body {
 
   /* Right-side three line hamburger menu button */
   .sidebar-toggle-btn {
-    width: 36px !important;
-    height: 36px !important;
-    min-width: 36px !important;
-    display: inline-flex !important;
-    align-items: center !important;
+    display: flex !important;
+    flex-direction: column !important;
     justify-content: center !important;
-    background: var(--panel-raised) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: var(--radius) !important;
-    color: var(--text-primary) !important;
-    cursor: pointer !important;
+    align-items: center !important;
+    gap: 3.5px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
     padding: 0 !important;
+    background: rgba(225, 29, 72, 0.08) !important;
+    border: 1.5px solid rgba(225, 29, 72, 0.28) !important;
+    border-radius: 9px !important;
+    cursor: pointer !important;
   }
 }
 
