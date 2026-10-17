@@ -1,0 +1,24 @@
+# Node
+node_modules/
+dist/
+build/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Env files - never commit real secrets
+.env
+.env.local
+
+# Expo / React Native
+.expo/
+.expo-shared/
+
+# OS / editor
+.DS_Store
+.vscode/*
+!.vscode/extensions.json

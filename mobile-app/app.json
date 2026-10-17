@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "NeoCare",
+    "slug": "neocare-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": { "package": "com.neocare.mobile" },
+    "ios": { "bundleIdentifier": "com.neocare.mobile" }
+  }
+}
