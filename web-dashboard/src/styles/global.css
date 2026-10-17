@@ -3301,14 +3301,15 @@ select {
   .public-header {
     flex-wrap: wrap;
     height: auto;
-    padding: 0 18px;
+    padding: 0 16px;
     position: relative;
+    border-bottom: 1px solid var(--border);
   }
 
-  /* Row 1: brand + right controls — 64px tall */
+  /* Row 1: brand + right controls — 56px tall */
   .public-header .header-left,
   .public-header .header-right {
-    height: 60px;
+    height: 56px;
     display: flex;
     align-items: center;
   }
@@ -3316,6 +3317,10 @@ select {
   .public-header .header-left {
     flex: 1;
     min-width: 0;
+  }
+
+  .public-header .header-right {
+    gap: 8px;
   }
 
   /* Hide desktop nav on mobile */
@@ -3328,41 +3333,57 @@ select {
     display: none !important;
   }
 
-  /* Show hamburger on mobile */
+  /* Show hamburger on mobile styled identically to app top header */
   .pub-hamburger-btn {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    width: 34px;
-    height: 34px;
-    min-width: 34px;
-    padding: 9px 7px;
-    background: var(--panel-raised);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: all 0.15s ease;
-    flex-shrink: 0;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 3.5px !important;
+    width: 38px !important;
+    height: 38px !important;
+    min-width: 38px !important;
+    padding: 0 !important;
+    background: rgba(225, 29, 72, 0.08) !important;
+    border: 1.5px solid rgba(225, 29, 72, 0.28) !important;
+    border-radius: 9px !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    transition: all 0.18s ease !important;
   }
 
-  .pub-hamburger-btn:hover,
-  .pub-hamburger-btn.open {
-    border-color: var(--brand);
-    background: var(--brand-bg);
+  [data-theme="dark"] .pub-hamburger-btn {
+    background: rgba(225, 29, 72, 0.14) !important;
+    border-color: rgba(225, 29, 72, 0.35) !important;
+  }
+
+  .pub-hamburger-btn:hover {
+    background: var(--brand) !important;
+    border-color: var(--brand) !important;
+    box-shadow: 0 2px 8px var(--brand-glow) !important;
   }
 
   .pub-hamburger-line {
-    width: 100%;
-    height: 2px;
-    background: var(--text-secondary);
-    border-radius: 2px;
-    transition: background 0.15s, transform 0.2s, opacity 0.2s;
-    transform-origin: center;
+    display: block !important;
+    width: 17px !important;
+    height: 2.5px !important;
+    background: #4a151e !important;
+    border-radius: 999px !important;
+    transition: all 0.18s ease !important;
+  }
+
+  [data-theme="dark"] .pub-hamburger-line {
+    background: #fecdd3 !important;
+  }
+
+  .pub-hamburger-btn:hover .pub-hamburger-line {
+    background: #ffffff !important;
   }
 
   .pub-hamburger-btn.open .pub-hamburger-line:nth-child(1) {
     transform: translateY(6px) rotate(45deg);
-    background: var(--brand-light);
+    background: #ffffff !important;
   }
   .pub-hamburger-btn.open .pub-hamburger-line:nth-child(2) {
     opacity: 0;
@@ -3370,11 +3391,7 @@ select {
   }
   .pub-hamburger-btn.open .pub-hamburger-line:nth-child(3) {
     transform: translateY(-6px) rotate(-45deg);
-    background: var(--brand-light);
-  }
-
-  .pub-hamburger-btn:hover .pub-hamburger-line {
-    background: var(--brand-light);
+    background: #ffffff !important;
   }
 
   /* Mobile dropdown panel */
@@ -3503,13 +3520,6 @@ select {
   align-items: center;
 }
 
-@media (max-width: 960px) {
-  .hero {
-    grid-template-columns: 1fr;
-    padding: 44px 20px 52px;
-    gap: 36px;
-  }
-}
 
 .hero-badge {
   display: inline-flex;
@@ -3627,87 +3637,99 @@ select {
   gap: 6px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 960px) {
   .hero {
-    padding: 32px 16px 40px;
-    gap: 32px;
-    text-align: center;
+    grid-template-columns: 1fr !important;
+    padding: 32px 16px 44px !important;
+    gap: 32px !important;
+    text-align: center !important;
   }
 
   .hero-left {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100% !important;
   }
 
   .hero-badge {
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 16px;
+    margin: 0 auto 16px !important;
+    align-self: center !important;
   }
 
   .hero-title {
-    text-align: center;
-    font-size: clamp(26px, 7.5vw, 36px);
-    margin: 0 auto 16px;
+    text-align: center !important;
+    font-size: clamp(26px, 7.5vw, 36px) !important;
+    margin: 0 auto 16px !important;
+    width: 100% !important;
   }
 
   .hero-body {
-    text-align: center;
-    margin: 0 auto 24px;
-    max-width: 480px;
-    font-size: 14.5px;
+    text-align: center !important;
+    margin: 0 auto 24px !important;
+    max-width: 480px !important;
+    font-size: 14.5px !important;
+    width: 100% !important;
   }
 
   .hero-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 320px;
-    margin: 0 auto 24px;
-    gap: 10px;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 320px !important;
+    margin: 0 auto 24px !important;
+    gap: 10px !important;
   }
 
   .hero-actions .btn-cta,
   .hero-actions .btn-cta-outline {
-    width: 100%;
-    justify-content: center;
-    box-sizing: border-box;
+    width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
   }
 
   .hero-trust-bar {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    text-align: center;
-    margin: 0 auto;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 12px 18px !important;
+    text-align: center !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+  }
+
+  .hero-trust-item {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
   }
 
   .hero-right {
-    display: flex;
-    justify-content: center;
-    width: 100%;
+    display: flex !important;
+    justify-content: center !important;
+    width: 100% !important;
   }
 
   .telemetry-card {
-    max-width: 440px;
-    width: 100%;
-    margin: 0 auto;
-    padding: 18px 14px;
+    max-width: 440px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    padding: 18px 14px !important;
   }
 
   .metrics-ribbon {
-    text-align: center;
+    text-align: center !important;
   }
 
   .metric-item {
-    align-items: center;
-    text-align: center;
+    align-items: center !important;
+    text-align: center !important;
   }
 }
 
