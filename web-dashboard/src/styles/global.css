@@ -7094,3 +7094,70 @@ html, body {
   }
 }
 
+/* 6. Native Mobile App Bottom Navigation Bar */
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 840px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: var(--panel);
+    border-top: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    align-items: center;
+    justify-content: space-around;
+    z-index: 1000;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .mobile-tab-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    flex: 1;
+    height: 100%;
+    text-decoration: none;
+    color: var(--text-tertiary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 6px 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .mobile-tab-item:active {
+    transform: scale(0.92);
+  }
+
+  .mobile-tab-item.active {
+    color: var(--brand);
+  }
+
+  .mobile-tab-item.active .mobile-tab-icon {
+    transform: translateY(-1px);
+    filter: drop-shadow(0 0 6px var(--brand-glow));
+  }
+
+  .mobile-tab-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+
+  .app-main {
+    padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+

@@ -7,6 +7,7 @@ import MarqueeBanner from "./MarqueeBanner";
 import ProfilePill from "./ProfilePill";
 import UserProfileModal from "./UserProfileModal";
 import FirstTimePasswordModal from "./FirstTimePasswordModal";
+import MobileBottomNav from "./MobileBottomNav";
 
 const MOBILE_BP = 840;
 
@@ -232,6 +233,12 @@ export default function Layout({ children }) {
 
         <main className="app-main">{children}</main>
       </div>
+
+      {/* Mobile App Bottom Navigation Bar */}
+      <MobileBottomNav
+        onOpenMenu={() => setCollapsed(false)}
+        onOpenProfile={() => setShowProfileModal(true)}
+      />
 
       {/* User Profile Modal */}
       <UserProfileModal
