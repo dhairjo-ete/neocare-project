@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import NicuGridView from "../components/NicuGridView";
 import DetailedIncubatorView from "../components/DetailedIncubatorView";
-import SimulationControls from "../components/SimulationControls";
 import { useSocket } from "../hooks/useSocket";
 import axiosClient from "../api/axiosClient";
 
@@ -150,8 +149,6 @@ export default function Dashboard() {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
-          <SimulationControls selectedDevice={viewMode === "detailed" ? selectedDevice : null} />
-
           {viewMode === "detailed" && (
             <button
               type="button"

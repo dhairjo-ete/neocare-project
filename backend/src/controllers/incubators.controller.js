@@ -301,6 +301,53 @@ async function controlIncubator(req, res) {
   }
 }
 
+// Toggle Incubator Active/Maintenance Status & Trigger Live Telemetry Simulator
+async function toggleIncubatorStatus(req, res) {
+  try {
+    const { id } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(id)
+      ? { _id: id }
+      : { deviceTopicId: id };
+
+    const incubator = await Incubator.findOne(query);
+    if (!incubator) {
+      return res.status(404).json({ error: "Incubator not found" });
+    }
+
+    if (req.user.role !== "system_admin" && incubator.hospitalId.toString() !== req.user.hospitalId?.toString()) {
+      return res.status(403).json({ error: "Forbidden - Incubator belongs to another hospital facility" });
+    }
+
+    const newStatus = incubator.status === "active" ? "maintenance" : "active";
+    incubator.status = newStatus;
+    await incubator.save();
+
+    // Invalidate MQTT cache
+    const { invalidateIncubatorCache } = require("../config/mqtt");
+    invalidateIncubatorCache(incubator.deviceTopicId);
+
+    // If turned active, ensure backend simulator engine is running so vitals stream immediately
+    const { startTelemetrySimulator, getSimulatorStatus } = require("../services/telemetrySimulator");
+    const simStatus = getSimulatorStatus();
+    if (newStatus === "active" && !simStatus.running) {
+      const io = req.app.get("io");
+      if (io) startTelemetrySimulator(io);
+    }
+
+    // Emit live sync event
+    emitDataChange("incubator", "update", incubator, incubator.hospitalId);
+
+    res.json({
+      success: true,
+      incubator,
+      status: incubator.status,
+      message: `Incubator ${incubator.label || incubator.deviceTopicId} is now ${incubator.status.toUpperCase()}`,
+    });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to toggle incubator status", message: err.message });
+  }
+}
+
 module.exports = {
   createIncubator,
   listIncubators,
@@ -308,6 +355,7 @@ module.exports = {
   deleteIncubator,
   getActiveSimulationDevices,
   controlIncubator,
+  toggleIncubatorStatus,
 };
 
 

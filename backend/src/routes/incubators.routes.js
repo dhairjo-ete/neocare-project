@@ -6,6 +6,7 @@ const {
   deleteIncubator,
   getActiveSimulationDevices,
   controlIncubator,
+  toggleIncubatorStatus,
 } = require("../controllers/incubators.controller");
 const verifyToken = require("../middleware/verifyToken");
 const requireRole = require("../middleware/requireRole");
@@ -20,6 +21,9 @@ router.get("/active-simulation-devices", requireSimulatorKey, getActiveSimulatio
 
 // Hardware-in-the-Loop (HIL) actuator control endpoint for clinical staff
 router.post("/:id/control", verifyToken, requireRole("doctor", "nurse", "hospital_admin", "system_admin"), controlIncubator);
+
+// Toggle incubator active/standby status and trigger telemetry simulator
+router.post("/:id/toggle-status", verifyToken, requireRole("doctor", "nurse", "hospital_admin", "system_admin"), toggleIncubatorStatus);
 
 router.post("/", verifyToken, requireRole("hospital_admin"), requireHospitalAssignment, createIncubator);
 router.get("/", verifyToken, requireHospitalAssignment, scopeQuery, listIncubators);

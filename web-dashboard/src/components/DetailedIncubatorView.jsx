@@ -23,13 +23,25 @@ export default function DetailedIncubatorView({
   const canControl = ["doctor", "nurse", "hospital_admin", "system_admin"].includes(user?.role);
 
   const [patient, setPatient] = useState(null);
+  const [incubator, setIncubator] = useState(null);
+  const [isTogglingStatus, setIsTogglingStatus] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
   const [isMuted, setIsMuted] = useState(false);
   const [notes, setNotes] = useState([]);
   const [newNoteText, setNewNoteText] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
 
-  // Fetch active patient assigned to this incubator
+  // Fetch incubator and active patient assigned to this incubator
   const loadPatient = useCallback(() => {
+    // 1. Fetch Incubator object
+    axiosClient.get("/incubators")
+      .then((res) => {
+        const inc = res.data.find((i) => i.deviceTopicId === selectedDevice || String(i._id) === selectedDevice);
+        if (inc) setIncubator(inc);
+      })
+      .catch(() => {});
+
+    // 2. Fetch Active Patient
     axiosClient.get("/patients?activeOnly=true")
       .then((res) => {
         const found = res.data.find((p) => {
@@ -40,6 +52,9 @@ export default function DetailedIncubatorView({
         setPatient(found || null);
 
         if (found) {
+          if (found.incubatorId && typeof found.incubatorId === "object") {
+            setIncubator((prev) => prev || found.incubatorId);
+          }
           axiosClient.get(`/patients/${found._id}/notes`)
             .then((nRes) => setNotes(nRes.data))
             .catch(() => {});
@@ -48,8 +63,32 @@ export default function DetailedIncubatorView({
       .catch(() => {});
   }, [selectedDevice]);
 
+  // Handler to toggle incubator active status and trigger backend simulator
+  const handleToggleIncubator = async () => {
+    if (!incubator?._id && !selectedDevice) return;
+    const targetId = incubator?._id || selectedDevice;
+    setIsTogglingStatus(true);
+    try {
+      const { data } = await axiosClient.post(`/incubators/${targetId}/toggle-status`);
+      if (data.incubator) {
+        setIncubator(data.incubator);
+      } else {
+        setIncubator((prev) => prev ? { ...prev, status: data.status } : null);
+      }
+      setStatusMsg(data.status === "active" ? "Incubator activated! Telemetry streaming." : "Incubator placed on standby.");
+      setTimeout(() => setStatusMsg(""), 3500);
+    } catch (err) {
+      console.error("Failed to toggle incubator status:", err);
+      const errMsg = err?.response?.data?.error || "Failed to update incubator status";
+      alert(errMsg);
+    } finally {
+      setIsTogglingStatus(false);
+    }
+  };
+
   useEffect(() => {
     setPatient(null);
+    setIncubator(null);
     setNotes([]);
     loadPatient();
   }, [selectedDevice, loadPatient]);
@@ -203,29 +242,65 @@ export default function DetailedIncubatorView({
           </div>
         </div>
 
-        {patient && (
-          <div className="patient-actions-bar" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-            <Link
-              to={`/patients/${patient._id}`}
-              className="btn-small-outline"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
-              title="Open complete clinical profile and medical history for this infant"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-              </svg>
-              View Patient Chart →
-            </Link>
-            <button className="btn-small-outline" onClick={() => setShowNoteInput((s) => !s)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-              </svg>
-              Add Clinical Note
-            </button>
-          </div>
-        )}
+        <div className="patient-actions-bar" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginTop: 12 }}>
+          {patient && (
+            <>
+              <Link
+                to={`/patients/${patient._id}`}
+                className="btn-small-outline"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, textDecoration: "none" }}
+                title="Open complete clinical profile and medical history for this infant"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                </svg>
+                View Patient Chart →
+              </Link>
+              <button className="btn-small-outline" onClick={() => setShowNoteInput((s) => !s)} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+                Add Clinical Note
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            className="btn-small-outline"
+            onClick={handleToggleIncubator}
+            disabled={isTogglingStatus}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              fontWeight: 700,
+              color: incubator?.status === "active" ? "var(--ok, #22c55e)" : "var(--warning, #f59e0b)",
+              borderColor: incubator?.status === "active" ? "var(--ok, #22c55e)" : "var(--warning, #f59e0b)",
+              background: incubator?.status === "active" ? "rgba(34, 197, 94, 0.08)" : "rgba(245, 158, 11, 0.08)",
+            }}
+            title="Click to activate incubator and trigger live telemetry simulator"
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: incubator?.status === "active" ? "var(--ok, #22c55e)" : "var(--warning, #f59e0b)",
+                boxShadow: incubator?.status === "active" ? "0 0 8px var(--ok, #22c55e)" : "none",
+              }}
+            />
+            <span>{isTogglingStatus ? "Updating..." : (incubator?.status === "active" ? "Incubator: Active (Streaming)" : "Incubator: Standby (Click to Activate)")}</span>
+          </button>
+
+          {statusMsg && (
+            <span style={{ fontSize: 12, color: "var(--brand-light)", fontWeight: 600 }}>
+              {statusMsg}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Add Clinical Note Form */}
