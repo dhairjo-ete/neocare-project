@@ -13,6 +13,7 @@ const usersRoutes = require("./routes/users.routes");
 const statsRoutes = require("./routes/stats.routes");
 const notificationsRoutes = require("./routes/notifications.routes");
 const announcementsRoutes = require("./routes/announcements.routes");
+const simulatorRoutes = require("./routes/simulator.routes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use("/api/users", usersRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/announcements", announcementsRoutes);
+app.use("/api/simulator", simulatorRoutes);
 
 // #4 FIX: Global Error Handler Middleware
 app.use((err, req, res, next) => {

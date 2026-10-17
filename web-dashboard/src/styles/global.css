@@ -6599,3 +6599,498 @@ select {
   color: var(--warning);
   border: 1px solid rgba(245, 158, 11, 0.25);
 }
+
+/* ============================================================
+   NEOCARE MASTER MOBILE & TABLET RESPONSIVE SYSTEM
+   Ensures flawless experience across iPhone, Android, and tablets
+   ============================================================ */
+
+/* 1. Global Viewport & Horizontal Overflow Protection */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100%;
+}
+
+.portal-root-container,
+.app-shell,
+.app-main-wrapper {
+  overflow-x: hidden !important;
+  max-width: 100vw;
+  width: 100%;
+}
+
+/* 2. Tablet & Mobile Layout Shell (<= 840px) */
+@media (max-width: 840px) {
+  .app-sidebar {
+    position: fixed !important;
+    left: -280px !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    width: 270px !important;
+    max-width: 80vw !important;
+    z-index: 9999 !important;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
+    transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  .app-shell.sidebar-layout:not(.sidebar-collapsed) .app-sidebar {
+    left: 0 !important;
+  }
+
+  .sidebar-mobile-backdrop {
+    display: block !important;
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .sidebar-mobile-backdrop.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-top-header {
+    height: 58px;
+    padding: 0 12px;
+    gap: 8px;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .sidebar-toggle-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+  }
+
+  .header-page-title {
+    font-size: 13.5px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+    color: var(--text-primary);
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .status-pill {
+    display: none !important;
+  }
+
+  .notif-bell-btn,
+  .theme-toggle-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+  }
+
+  .profile-pill {
+    padding: 3px 6px !important;
+    gap: 6px !important;
+  }
+
+  .user-name-text,
+  .user-role-badge {
+    display: none !important;
+  }
+
+  .user-avatar-circle {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* 3. Mobile Screens & Handheld Devices (<= 680px) */
+@media (max-width: 680px) {
+  .app-main {
+    padding: 12px 10px 64px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .dashboard-operational-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .dashboard-operational-bar .page-title {
+    font-size: 18px !important;
+    margin: 0 !important;
+  }
+
+  .dashboard-operational-bar .btn-small-outline {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 14px !important;
+    font-size: 13px !important;
+  }
+
+  /* Command Center Breadcrumbs Bar */
+  .grid-breadcrumb-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+    border-radius: var(--radius) !important;
+  }
+
+  .breadcrumb-links {
+    display: flex !important;
+    align-items: center !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px !important;
+    scrollbar-width: none !important;
+    gap: 6px !important;
+  }
+
+  .breadcrumb-links::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .breadcrumb-btn {
+    font-size: 12px !important;
+    padding: 6px 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .grid-breadcrumb-bar .btn-small-outline {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 7px 12px !important;
+  }
+
+  /* Bed Floorplan Grid -> Single Clean Column on Mobile */
+  .nicu-grid-floorplan {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .nicu-bed-card {
+    padding: 14px !important;
+    border-radius: var(--radius) !important;
+    gap: 10px !important;
+  }
+
+  .bed-identity .bed-number {
+    font-size: 10.5px !important;
+  }
+
+  .bed-identity .bed-label {
+    font-size: 14px !important;
+  }
+
+  .bed-patient-section {
+    padding: 8px 10px !important;
+  }
+
+  .patient-meta .patient-name {
+    font-size: 13px !important;
+  }
+
+  .patient-meta .patient-sub {
+    font-size: 11px !important;
+  }
+
+  /* 3-Box Mini Vitals on Bed Card */
+  .bed-vitals-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .vital-mini-box {
+    padding: 6px 4px !important;
+    text-align: center !important;
+    border-radius: var(--radius-sm) !important;
+  }
+
+  .vital-mini-label {
+    font-size: 9.5px !important;
+  }
+
+  .vital-mini-value {
+    font-size: 13px !important;
+  }
+
+  .vital-mini-value small {
+    font-size: 9px !important;
+  }
+
+  /* Patient Profile Header Card in Detailed Bed View */
+  .patient-profile-card {
+    padding: 14px 12px !important;
+    border-radius: var(--radius) !important;
+    gap: 12px !important;
+  }
+
+  .patient-profile-main {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .patient-header-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  .patient-title-name {
+    font-size: 17px !important;
+    line-height: 1.3 !important;
+  }
+
+  .patient-meta-grid {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+  }
+
+  .patient-meta-grid > div {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    background: var(--panel-raised) !important;
+    border-radius: var(--radius-sm) !important;
+    font-size: 12px !important;
+  }
+
+  .patient-actions-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .patient-actions-bar > * {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 14px !important;
+    font-size: 13px !important;
+  }
+
+  /* Emergency Alert Banner */
+  .emergency-alert-banner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+  }
+
+  .emergency-banner-left {
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .mute-alarm-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 14px !important;
+  }
+
+  /* Vital Cards Row */
+  .tile-row {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 18px !important;
+  }
+
+  .tile {
+    padding: 14px 16px !important;
+  }
+
+  .tile-main-reading {
+    margin: 8px 0 10px !important;
+  }
+
+  .tile-value {
+    font-size: 28px !important;
+  }
+
+  /* Live Chart Controls & Tabs */
+  .chart-controls {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .chart-tab-group {
+    width: 100% !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding: 2px !important;
+  }
+
+  .chart-tab-group::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .chart-tab {
+    flex: none !important;
+    font-size: 11px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Digital Twin SVG & Controls */
+  .digital-twin-body {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .incubator-svg {
+    max-height: 180px !important;
+  }
+
+  .twin-metric-box {
+    padding: 10px 12px !important;
+  }
+
+  /* Clinical Notes */
+  .clinical-note-form-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .clinical-note-form-actions {
+    flex-direction: column-reverse !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .clinical-note-form-actions > * {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 9px 14px !important;
+  }
+
+  /* Executive Overview Workspace Tabs */
+  .workspace-tabs-bar {
+    display: flex !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    padding-bottom: 4px !important;
+    gap: 4px !important;
+  }
+
+  .workspace-tabs-bar::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .workspace-tab {
+    flex: none !important;
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+
+  /* Responsive Tables */
+  .table-responsive,
+  .clinical-ledger-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    width: 100% !important;
+  }
+}
+
+/* 4. Ultra-Compact Mobile Phones (<= 420px) */
+@media (max-width: 420px) {
+  .header-page-title {
+    max-width: 120px !important;
+    font-size: 12.5px !important;
+  }
+
+  .app-main {
+    padding: 10px 8px 60px !important;
+  }
+
+  .patient-title-name {
+    font-size: 15px !important;
+  }
+
+  .tile-value {
+    font-size: 24px !important;
+  }
+
+  .badge {
+    font-size: 10px !important;
+    padding: 2px 6px !important;
+  }
+}
+
+/* 5. Mobile Modal Shells (All dialogue boxes on small viewports) */
+@media (max-width: 580px) {
+  .modal-backdrop,
+  [style*="position: fixed"][style*="inset: 0"],
+  [style*="position: fixed"][style*="top: 0"] {
+    padding: 10px !important;
+    align-items: center !important;
+  }
+
+  .modal-panel,
+  .panel[style*="max-width: 480px"],
+  .panel[style*="max-width: 520px"],
+  .panel[style*="max-width: 600px"],
+  .panel[style*="max-width: 720px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92dvh !important;
+    overflow-y: auto !important;
+    padding: 16px 14px !important;
+    border-radius: var(--radius) !important;
+    box-sizing: border-box !important;
+  }
+
+  .modal-actions,
+  [style*="display: flex"][style*="justify-content: flex-end"] {
+    flex-direction: column-reverse !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .modal-actions button,
+  .modal-actions .btn-primary,
+  .modal-actions .btn-secondary,
+  .modal-actions .btn-outline {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 10px 14px !important;
+    font-size: 13.5px !important;
+  }
+}
+

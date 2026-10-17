@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import Layout from "../components/Layout";
 import NicuGridView from "../components/NicuGridView";
 import DetailedIncubatorView from "../components/DetailedIncubatorView";
+import SimulationControls from "../components/SimulationControls";
 import { useSocket } from "../hooks/useSocket";
 import axiosClient from "../api/axiosClient";
 
@@ -148,19 +149,23 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        {viewMode === "detailed" && (
-          <button
-            type="button"
-            className="btn-small-outline"
-            onClick={() => {
-              setViewMode("grid");
-              setSearchParams({});
-            }}
-            style={{ display: "flex", alignItems: "center", gap: 6 }}
-          >
-            ← Back to NICU Grid
-          </button>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+          <SimulationControls selectedDevice={viewMode === "detailed" ? selectedDevice : null} />
+
+          {viewMode === "detailed" && (
+            <button
+              type="button"
+              className="btn-small-outline"
+              onClick={() => {
+                setViewMode("grid");
+                setSearchParams({});
+              }}
+              style={{ display: "flex", alignItems: "center", gap: 6 }}
+            >
+              ← Back to NICU Grid
+            </button>
+          )}
+        </div>
       </div>
 
       {/* MODE 1: Hierarchical NICU Grid View */}

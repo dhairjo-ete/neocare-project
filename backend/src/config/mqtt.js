@@ -81,6 +81,9 @@ function connectMQTT(io) {
       const data = JSON.parse(payload.toString());
 
       if (topic.endsWith("/vitals")) {
+        const { recordExternalMqtt } = require("../services/telemetrySimulator");
+        recordExternalMqtt(data.device_id);
+
         const scope = await resolveIncubatorScope(data.device_id);
 
         // ── GUARD: Block phantom vitals when no patient is admitted ────────────

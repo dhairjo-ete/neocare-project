@@ -15,9 +15,15 @@ async function start() {
   const server = http.createServer(app);
   const io = new Server(server, { cors: { origin: "*" } });
 
+  app.set("io", io);
+
   initSocket(io);
   connectMQTT(io); // MQTT ingest pushes into Socket.io + MongoDB
   startEscalationMonitor(io); // Tier 4: Background Escalation Daemon
+
+  // Start autonomous continuous neonatal digital twin simulator
+  const { startTelemetrySimulator } = require("./src/services/telemetrySimulator");
+  startTelemetrySimulator(io);
 
   server.on("error", (err) => {
     if (err.code === "EADDRINUSE") {

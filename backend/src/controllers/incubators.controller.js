@@ -271,6 +271,10 @@ async function controlIncubator(req, res) {
     };
     publishControlCommand(incubator.deviceTopicId, mqttPayload);
 
+    // Apply directly to the built-in continuous digital twin
+    const { applyTwinActuators } = require("../services/telemetrySimulator");
+    applyTwinActuators(incubator.deviceTopicId, newSettings);
+
     // 2. Broadcast live event via WebSockets so all clinical dashboards update immediately
     const io = req.app.get("io");
     if (io) {
