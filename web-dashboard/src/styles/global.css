@@ -6622,20 +6622,28 @@ html, body {
 
 /* 2. Tablet & Mobile Layout Shell (<= 840px) */
 @media (max-width: 840px) {
+  /* Right-side sliding drawer matching the right-side hamburger button */
   .app-sidebar {
     position: fixed !important;
-    left: -280px !important;
+    right: -290px !important;
+    left: auto !important;
     top: 0 !important;
     bottom: 0 !important;
     width: 270px !important;
-    max-width: 80vw !important;
+    max-width: 82vw !important;
     z-index: 9999 !important;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5) !important;
-    transition: left 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.5) !important;
+    transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
 
   .app-shell.sidebar-layout:not(.sidebar-collapsed) .app-sidebar {
-    left: 0 !important;
+    right: 0 !important;
+    left: auto !important;
+  }
+
+  .sidebar-collapsed .app-sidebar {
+    right: -290px !important;
+    left: auto !important;
   }
 
   .sidebar-mobile-backdrop {
@@ -6655,44 +6663,68 @@ html, body {
     pointer-events: auto;
   }
 
+  /* Fixed Top Header */
   .app-top-header {
-    height: 58px;
+    height: 56px;
     padding: 0 12px;
-    gap: 8px;
+    gap: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .header-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
     flex: 1;
+    overflow: hidden;
   }
 
-  .sidebar-toggle-btn {
-    width: 38px;
-    height: 38px;
-    min-width: 38px;
+  .header-mobile-brand {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border-radius: var(--radius);
+    gap: 7px;
+    text-decoration: none;
+    color: inherit;
+    flex-shrink: 0;
+  }
+
+  .header-brand-icon {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    margin-right: 0 !important;
+  }
+
+  .header-brand-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+  }
+
+  .header-title-divider {
+    color: var(--border);
+    font-size: 13px;
+    margin: 0 2px;
+    flex-shrink: 0;
   }
 
   .header-page-title {
-    font-size: 13.5px;
-    font-weight: 700;
+    font-size: 12.5px;
+    font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 180px;
-    color: var(--text-primary);
+    color: var(--text-secondary);
   }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-shrink: 0;
   }
 
@@ -6700,16 +6732,39 @@ html, body {
     display: none !important;
   }
 
-  .notif-bell-btn,
+  /* Permanently hide text labels inside icon buttons on mobile */
+  .theme-toggle-label {
+    display: none !important;
+  }
+
   .theme-toggle-btn {
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: var(--radius) !important;
+  }
+
+  .notif-bell-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .profile-pill {
-    padding: 3px 6px !important;
-    gap: 6px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    cursor: pointer;
   }
 
   .user-name-text,
@@ -6718,16 +6773,32 @@ html, body {
   }
 
   .user-avatar-circle {
-    width: 30px !important;
-    height: 30px !important;
-    font-size: 12px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 13px !important;
+  }
+
+  /* Right-side three line hamburger menu button */
+  .sidebar-toggle-btn {
+    width: 36px !important;
+    height: 36px !important;
+    min-width: 36px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--panel-raised) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius) !important;
+    color: var(--text-primary) !important;
+    cursor: pointer !important;
+    padding: 0 !important;
   }
 }
 
 /* 3. Mobile Screens & Handheld Devices (<= 680px) */
 @media (max-width: 680px) {
   .app-main {
-    padding: 12px 10px 64px !important;
+    padding: 14px 12px 36px !important;
     width: 100% !important;
     max-width: 100% !important;
   }
@@ -6846,43 +6917,76 @@ html, body {
 
   /* Patient Profile Header Card in Detailed Bed View */
   .patient-profile-card {
-    padding: 14px 12px !important;
+    padding: 16px 14px !important;
     border-radius: var(--radius) !important;
     gap: 12px !important;
   }
 
   .patient-profile-main {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 10px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .patient-avatar-box {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+    border-radius: 10px !important;
   }
 
   .patient-header-row {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 6px !important;
+    gap: 4px !important;
   }
 
   .patient-title-name {
-    font-size: 17px !important;
-    line-height: 1.3 !important;
+    font-size: 18px !important;
+    line-height: 1.2 !important;
   }
 
+  /* Elegant 2-Column Clinical Stats Grid */
   .patient-meta-grid {
-    grid-template-columns: 1fr !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 8px !important;
-    margin-bottom: 12px !important;
+    margin: 12px 0 !important;
     width: 100% !important;
   }
 
-  .patient-meta-grid > div {
+  .patient-meta-item {
     display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    padding: 6px 10px !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    padding: 8px 10px !important;
     background: var(--panel-raised) !important;
-    border-radius: var(--radius-sm) !important;
-    font-size: 12px !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: var(--radius-sm, 6px) !important;
+    min-width: 0 !important;
+  }
+
+  .patient-meta-k {
+    font-size: 9.5px !important;
+    color: var(--text-tertiary) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    font-weight: 600 !important;
+    margin-bottom: 2px !important;
+    white-space: nowrap !important;
+  }
+
+  .patient-meta-v {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+    font-family: var(--mono) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
   }
 
   .patient-actions-bar {
@@ -7030,16 +7134,19 @@ html, body {
 /* 4. Ultra-Compact Mobile Phones (<= 420px) */
 @media (max-width: 420px) {
   .header-page-title {
-    max-width: 120px !important;
-    font-size: 12.5px !important;
+    display: none !important;
+  }
+
+  .header-title-divider {
+    display: none !important;
   }
 
   .app-main {
-    padding: 10px 8px 60px !important;
+    padding: 10px 8px 30px !important;
   }
 
   .patient-title-name {
-    font-size: 15px !important;
+    font-size: 16px !important;
   }
 
   .tile-value {
@@ -7094,70 +7201,5 @@ html, body {
   }
 }
 
-/* 6. Native Mobile App Bottom Navigation Bar */
-.mobile-bottom-nav {
-  display: none;
-}
-
-@media (max-width: 840px) {
-  .mobile-bottom-nav {
-    display: flex;
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: calc(56px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    background: var(--panel);
-    border-top: 1px solid var(--border);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    align-items: center;
-    justify-content: space-around;
-    z-index: 1000;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
-  }
-
-  .mobile-tab-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    flex: 1;
-    height: 100%;
-    text-decoration: none;
-    color: var(--text-tertiary);
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    padding: 6px 0;
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .mobile-tab-item:active {
-    transform: scale(0.92);
-  }
-
-  .mobile-tab-item.active {
-    color: var(--brand);
-  }
-
-  .mobile-tab-item.active .mobile-tab-icon {
-    transform: translateY(-1px);
-    filter: drop-shadow(0 0 6px var(--brand-glow));
-  }
-
-  .mobile-tab-label {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
-  }
-
-  .app-main {
-    padding-bottom: calc(78px + env(safe-area-inset-bottom, 0px)) !important;
-  }
-}
 
 

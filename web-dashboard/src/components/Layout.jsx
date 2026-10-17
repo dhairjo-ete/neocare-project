@@ -7,7 +7,6 @@ import MarqueeBanner from "./MarqueeBanner";
 import ProfilePill from "./ProfilePill";
 import UserProfileModal from "./UserProfileModal";
 import FirstTimePasswordModal from "./FirstTimePasswordModal";
-import MobileBottomNav from "./MobileBottomNav";
 
 const MOBILE_BP = 840;
 
@@ -201,18 +200,17 @@ export default function Layout({ children }) {
       <div className="app-main-wrapper">
         <header className="app-top-header">
           <div className="header-left">
-            <button
-              type="button"
-              className="sidebar-toggle-btn"
-              onClick={() => setCollapsed(!collapsed)}
-              title="Toggle Sidebar"
-              aria-label="Toggle Sidebar"
-            >
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-              <span className="hamburger-line"></span>
-            </button>
+            <Link to="/" className="header-mobile-brand" title="NeoCare Home">
+              <div className="sidebar-emblem header-brand-icon">
+                <span className="pulse-dot"></span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3.5 12h4l3-5.5 4 11 3-5.5h3"/>
+                </svg>
+              </div>
+              <span className="brand-mark header-brand-title">NeoCare</span>
+            </Link>
 
+            <span className="header-title-divider">/</span>
             <span className="header-page-title">{getPageTitle(location.pathname)}</span>
           </div>
 
@@ -228,17 +226,24 @@ export default function Layout({ children }) {
             {user && (
               <ProfilePill user={user} onClick={() => setShowProfileModal(true)} />
             )}
+
+            {/* Three-line Menu Button on the Right Side */}
+            <button
+              type="button"
+              className="sidebar-toggle-btn"
+              onClick={() => setCollapsed(!collapsed)}
+              title="Toggle Menu"
+              aria-label="Toggle Menu"
+            >
+              <span className="hamburger-line"></span>
+              <span className="hamburger-line"></span>
+              <span className="hamburger-line"></span>
+            </button>
           </div>
         </header>
 
         <main className="app-main">{children}</main>
       </div>
-
-      {/* Mobile App Bottom Navigation Bar */}
-      <MobileBottomNav
-        onOpenMenu={() => setCollapsed(false)}
-        onOpenProfile={() => setShowProfileModal(true)}
-      />
 
       {/* User Profile Modal */}
       <UserProfileModal

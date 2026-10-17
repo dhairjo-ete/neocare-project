@@ -168,14 +168,32 @@ export default function DetailedIncubatorView({
             </div>
             {patient ? (
               <div className="patient-meta-grid">
-                <div><span>Gestational Age:</span> <strong>{patient.gestationalAgeWeeks ? `${patient.gestationalAgeWeeks} Weeks` : "N/A"}</strong></div>
-                <div><span>Birth Weight:</span> <strong>{patient.birthWeightGrams ? `${patient.birthWeightGrams} g` : "N/A"}</strong></div>
-                <div><span>Blood Type:</span> <strong>{patient.bloodType || "N/A"}</strong></div>
-                <div><span>Assigned Doctor:</span> <strong>{patient.assignedDoctor?.name ? formatDoctorName(patient.assignedDoctor.name) : "NICU Medical Team"}</strong></div>
+                <div className="patient-meta-item">
+                  <span className="patient-meta-k">Gestational Age</span>
+                  <strong className="patient-meta-v">{patient.gestationalAgeWeeks ? `${patient.gestationalAgeWeeks} Weeks` : "N/A"}</strong>
+                </div>
+                <div className="patient-meta-item">
+                  <span className="patient-meta-k">Birth Weight</span>
+                  <strong className="patient-meta-v">{patient.birthWeightGrams ? `${patient.birthWeightGrams} g` : "N/A"}</strong>
+                </div>
+                <div className="patient-meta-item">
+                  <span className="patient-meta-k">Blood Type</span>
+                  <strong className="patient-meta-v">{patient.bloodType || "N/A"}</strong>
+                </div>
+                <div className="patient-meta-item">
+                  <span className="patient-meta-k">Admitted</span>
+                  <strong className="patient-meta-v">{patient.admittedAt && !isNaN(new Date(patient.admittedAt).getTime()) ? new Date(patient.admittedAt).toLocaleDateString() : "N/A"}</strong>
+                </div>
+                <div className="patient-meta-item">
+                  <span className="patient-meta-k">Attending Doctor</span>
+                  <strong className="patient-meta-v">{patient.assignedDoctor?.name ? formatDoctorName(patient.assignedDoctor.name) : "NICU Team"}</strong>
+                </div>
                 {patient.assignedNurse?.name && (
-                  <div><span>Assigned Nurse:</span> <strong>Nurse {patient.assignedNurse.name.replace(/^nurse\s+/i, "")}</strong></div>
+                  <div className="patient-meta-item">
+                    <span className="patient-meta-k">Duty Nurse</span>
+                    <strong className="patient-meta-v">Nurse {patient.assignedNurse.name.replace(/^nurse\s+/i, "")}</strong>
+                  </div>
                 )}
-                <div><span>Admitted:</span> <strong>{patient.admittedAt && !isNaN(new Date(patient.admittedAt).getTime()) ? new Date(patient.admittedAt).toLocaleDateString() : "N/A"}</strong></div>
               </div>
             ) : (
               <p className="patient-empty-notice">
