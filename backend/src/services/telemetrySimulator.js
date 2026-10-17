@@ -492,9 +492,8 @@ async function simulationTick() {
           incubatorStatus: inc.status || "active",
           reason: "No patient admitted to this incubator",
         };
-        let broadcaster = ioInstance.to("room:system_admin");
-        if (inc.hospitalId) broadcaster = broadcaster.to(`room:hospital:${inc.hospitalId}`);
-        broadcaster.emit("incubator:standby", standbyPayload);
+        ioInstance.emit("incubator:standby", standbyPayload);
+        if (inc.hospitalId) ioInstance.to(`room:hospital:${inc.hospitalId}`).emit("incubator:standby", standbyPayload);
         continue;
       }
 
@@ -537,11 +536,11 @@ async function simulationTick() {
         ...scope,
       });
 
-      // 2. Broadcast live over Socket.io
-      let broadcaster = ioInstance.to("room:system_admin");
-      if (scope.hospitalId) broadcaster = broadcaster.to(`room:hospital:${scope.hospitalId}`);
-      if (scope.patientId) broadcaster = broadcaster.to(`room:patient:${scope.patientId}`);
-      broadcaster.emit("vitals:update", vitalDoc);
+      // 2. Broadcast live over Socket.io to all subscribed clinical dashboards
+      ioInstance.emit("vitals:update", vitalDoc);
+      if (scope.hospitalId) {
+        ioInstance.to(`room:hospital:${scope.hospitalId}`).emit("vitals:update", vitalDoc);
+      }
 
       // 3. Check clinical thresholds -> triggers alerts
       await checkThresholds({ ...reading, ...scope }, ioInstance);
