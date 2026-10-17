@@ -3627,6 +3627,90 @@ select {
   gap: 6px;
 }
 
+@media (max-width: 768px) {
+  .hero {
+    padding: 32px 16px 40px;
+    gap: 32px;
+    text-align: center;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .hero-badge {
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 16px;
+  }
+
+  .hero-title {
+    text-align: center;
+    font-size: clamp(26px, 7.5vw, 36px);
+    margin: 0 auto 16px;
+  }
+
+  .hero-body {
+    text-align: center;
+    margin: 0 auto 24px;
+    max-width: 480px;
+    font-size: 14.5px;
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto 24px;
+    gap: 10px;
+  }
+
+  .hero-actions .btn-cta,
+  .hero-actions .btn-cta-outline {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+
+  .hero-trust-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    margin: 0 auto;
+  }
+
+  .hero-right {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .telemetry-card {
+    max-width: 440px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 18px 14px;
+  }
+
+  .metrics-ribbon {
+    text-align: center;
+  }
+
+  .metric-item {
+    align-items: center;
+    text-align: center;
+  }
+}
+
 /* ---------- Telemetry Monitor Simulator Card (Hero Right) ---------- */
 
 .telemetry-card {
