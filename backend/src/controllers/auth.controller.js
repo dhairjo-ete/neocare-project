@@ -451,14 +451,14 @@ async function login(req, res) {
     }
 
     let valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid && ["doctor", "nurse"].includes(user.role) && user.licenseNumber) {
+
+    // Initial license number login is STRICTLY permitted only on first-time setup before a permanent password is set.
+    // Once permanent password is created (mustChangePassword === false), the license number CANNOT be used as password.
+    if (!valid && ["doctor", "nurse"].includes(user.role) && user.licenseNumber && Boolean(user.mustChangePassword)) {
       const inputPass = (password || "").trim();
       const lic = user.licenseNumber.trim();
       if (inputPass === lic || inputPass.toLowerCase() === lic.toLowerCase()) {
         valid = true;
-        user.mustChangePassword = true;
-        user.passwordHash = await bcrypt.hash(lic, 10);
-        await user.save();
       }
     }
 
@@ -737,6 +737,10 @@ async function firstTimeChangePassword(req, res) {
 
     if (!["doctor", "nurse"].includes(user.role)) {
       return res.status(403).json({ error: "First-time password setup is only applicable for clinical staff." });
+    }
+
+    if (!user.mustChangePassword) {
+      return res.status(400).json({ error: "Permanent password has already been established. Please update your password via User Profile." });
     }
 
     // Verify currentPassword against DB if provided
