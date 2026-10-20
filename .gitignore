@@ -22,3 +22,9 @@ venv/
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+
+# Desktop Executables & Release Installers
+*.exe
+release/
+NeoCare-Desktop-Installer/*.exe
+web-dashboard/release/
