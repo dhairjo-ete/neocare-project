@@ -266,8 +266,10 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 Security &amp; Change Password
               </div>
               <div className="profile-form-grid">
-                <div className="field">
-                  <label>Current Password (required for password change)</label>
+                <div className="field profile-field-full">
+                  <label>
+                    Current Password <span className="label-subtext">(required for password change)</span>
+                  </label>
                   <input
                     type="password"
                     className="input-text"

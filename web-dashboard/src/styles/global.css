@@ -945,6 +945,23 @@ select {
   gap: 14px 16px;
 }
 
+.profile-field-full {
+  grid-column: 1 / -1 !important;
+}
+
+.user-profile-modal-panel .field label,
+.profile-form-grid .field label {
+  white-space: normal !important;
+  word-break: break-word;
+  line-height: 1.35;
+}
+
+.label-subtext {
+  font-weight: 400;
+  color: var(--text-tertiary);
+  font-size: 11px;
+}
+
 .profile-card-logout-btn {
   display: inline-flex;
   align-items: center;
