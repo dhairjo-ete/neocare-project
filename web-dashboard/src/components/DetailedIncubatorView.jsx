@@ -208,28 +208,28 @@ export default function DetailedIncubatorView({
             {patient ? (
               <div className="patient-meta-grid">
                 <div className="patient-meta-item">
-                  <span className="patient-meta-k">Gestational Age</span>
+                  <span className="patient-meta-k">Gestational Age:</span>
                   <strong className="patient-meta-v">{patient.gestationalAgeWeeks ? `${patient.gestationalAgeWeeks} Weeks` : "N/A"}</strong>
                 </div>
                 <div className="patient-meta-item">
-                  <span className="patient-meta-k">Birth Weight</span>
+                  <span className="patient-meta-k">Birth Weight:</span>
                   <strong className="patient-meta-v">{patient.birthWeightGrams ? `${patient.birthWeightGrams} g` : "N/A"}</strong>
                 </div>
                 <div className="patient-meta-item">
-                  <span className="patient-meta-k">Blood Type</span>
+                  <span className="patient-meta-k">Blood Type:</span>
                   <strong className="patient-meta-v">{patient.bloodType || "N/A"}</strong>
                 </div>
                 <div className="patient-meta-item">
-                  <span className="patient-meta-k">Admitted</span>
+                  <span className="patient-meta-k">Admitted:</span>
                   <strong className="patient-meta-v">{patient.admittedAt && !isNaN(new Date(patient.admittedAt).getTime()) ? new Date(patient.admittedAt).toLocaleDateString() : "N/A"}</strong>
                 </div>
                 <div className="patient-meta-item">
-                  <span className="patient-meta-k">Attending Doctor</span>
+                  <span className="patient-meta-k">Attending Doctor:</span>
                   <strong className="patient-meta-v">{patient.assignedDoctor?.name ? formatDoctorName(patient.assignedDoctor.name) : "NICU Team"}</strong>
                 </div>
                 {patient.assignedNurse?.name && (
                   <div className="patient-meta-item">
-                    <span className="patient-meta-k">Duty Nurse</span>
+                    <span className="patient-meta-k">Duty Nurse:</span>
                     <strong className="patient-meta-v">Nurse {patient.assignedNurse.name.replace(/^nurse\s+/i, "")}</strong>
                   </div>
                 )}
