@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosClient from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 import InfoTooltip from "./ui/InfoTooltip";
 
 export default function UserProfileModal({ isOpen, onClose }) {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -101,6 +103,12 @@ export default function UserProfileModal({ isOpen, onClose }) {
     }
   };
 
+  const handleLogout = () => {
+    onClose();
+    logout();
+    navigate("/login");
+  };
+
   const getRoleBadgeLabel = (role) => {
     switch (role) {
       case "system_admin":
@@ -160,6 +168,19 @@ export default function UserProfileModal({ isOpen, onClose }) {
                     )}
                   </div>
                 </div>
+                <button
+                  type="button"
+                  className="profile-card-logout-btn"
+                  onClick={handleLogout}
+                  title="Log out of session"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  <span>Log Out</span>
+                </button>
               </div>
 
               {error && <div className="error-text" style={{ marginBottom: 16 }}>{error}</div>}
@@ -281,12 +302,28 @@ export default function UserProfileModal({ isOpen, onClose }) {
 
               {/* Footer Actions */}
               <div className="profile-modal-footer">
-                <button type="button" className="btn-small-outline" onClick={onClose}>
-                  Cancel
+                <button
+                  type="button"
+                  className="profile-footer-logout-btn"
+                  onClick={handleLogout}
+                  title="Sign out of your NeoCare session"
+                >
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  </svg>
+                  <span>Log Out</span>
                 </button>
-                <button type="submit" className="btn-small" disabled={saving}>
-                  {saving ? "Saving Changes..." : "Save Profile Changes"}
-                </button>
+
+                <div className="profile-modal-footer-actions">
+                  <button type="button" className="btn-small-outline" onClick={onClose}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-small" disabled={saving}>
+                    {saving ? "Saving Changes..." : "Save Profile Changes"}
+                  </button>
+                </div>
               </div>
             </form>
           )}

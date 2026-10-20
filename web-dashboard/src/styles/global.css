@@ -945,13 +945,99 @@ select {
   gap: 14px 16px;
 }
 
+.profile-card-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: rgba(225, 29, 72, 0.08);
+  border: 1px solid rgba(225, 29, 72, 0.28);
+  border-radius: var(--radius-md);
+  color: #e11d48;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.profile-card-logout-btn:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+  transform: translateY(-1px);
+}
+
+.profile-footer-logout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 15px;
+  background: rgba(225, 29, 72, 0.08);
+  border: 1px solid rgba(225, 29, 72, 0.28);
+  border-radius: var(--radius-md);
+  color: #e11d48;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-footer-logout-btn:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.25);
+  transform: translateY(-1px);
+}
+
 .profile-modal-footer {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
   margin-top: 24px;
   padding-top: 16px;
   border-top: 1px solid var(--border);
+}
+
+.profile-modal-footer-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+@media (max-width: 580px) {
+  .profile-card-header {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .profile-card-logout-btn {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+    margin-top: 6px;
+  }
+  .profile-modal-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .profile-footer-logout-btn {
+    justify-content: center;
+    width: 100%;
+  }
+  .profile-modal-footer-actions {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    gap: 10px;
+  }
+  .profile-modal-footer-actions button {
+    flex: 1;
+  }
 }
 
 .modal-filter-row {
@@ -1348,6 +1434,16 @@ select {
   gap: 12px;
   flex-shrink: 0;
   min-width: 0;
+}
+
+/* On desktop web view, NeoCare branding is already fully presented in the sidebar.
+   Hide mobile duplicate brand elements in top header to keep desktop header clean and focused. */
+.header-mobile-brand {
+  display: none !important;
+}
+
+.header-title-divider {
+  display: none !important;
 }
 
 .sidebar-toggle-btn {
@@ -6806,7 +6902,7 @@ html, body {
   }
 
   .header-mobile-brand {
-    display: flex;
+    display: flex !important;
     align-items: center;
     gap: 7px;
     text-decoration: none;
@@ -6829,6 +6925,7 @@ html, body {
   }
 
   .header-title-divider {
+    display: inline-block !important;
     color: var(--border);
     font-size: 13px;
     margin: 0 2px;
