@@ -541,8 +541,20 @@ async function simulationTick() {
       if (scope.hospitalId) {
         ioInstance.to(`room:hospital:${scope.hospitalId}`).emit("vitals:update", vitalDoc);
       }
+      if (scope.patientId) {
+        ioInstance.to(`room:patient:${scope.patientId}`).emit("vitals:update", vitalDoc);
+      }
+      ioInstance.to("room:system_admin").emit("vitals:update", vitalDoc);
 
-      // 3. Check clinical thresholds -> triggers alerts
+      // 3. Publish to HiveMQ Cloud MQTT broker (keeps MQTT ecosystem & external observers active)
+      try {
+        const { publishVitals } = require("../config/mqtt");
+        publishVitals(devKey, reading);
+      } catch (mqttErr) {
+        // Non-blocking: continue even if MQTT broker is momentarily unreachable
+      }
+
+      // 4. Check clinical thresholds -> triggers alerts
       await checkThresholds({ ...reading, ...scope }, ioInstance);
     }
   } catch (err) {

@@ -154,6 +154,20 @@ function publishControlCommand(deviceTopicId, payload) {
   return true;
 }
 
+/**
+ * Publish simulated or real telemetry packet to HiveMQ MQTT broker.
+ * Topic: neocare/{deviceTopicId}/vitals
+ */
+function publishVitals(deviceTopicId, payload) {
+  if (!mqttClientInstance || !mqttClientInstance.connected) {
+    return false;
+  }
+  const topic = `neocare/${deviceTopicId}/vitals`;
+  mqttClientInstance.publish(topic, JSON.stringify(payload), { qos: 1 });
+  return true;
+}
+
 module.exports = connectMQTT;
 module.exports.invalidateIncubatorCache = invalidateIncubatorCache;
 module.exports.publishControlCommand = publishControlCommand;
+module.exports.publishVitals = publishVitals;
