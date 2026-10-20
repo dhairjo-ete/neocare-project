@@ -78,6 +78,7 @@ export default function Patients() {
   const [submitting, setSubmitting] = useState(false);
   const [admittedSuccessData, setAdmittedSuccessData] = useState(null);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   // Counts shown on the Active / Discharged buttons
   const [activeCount, setActiveCount] = useState(null);
@@ -569,121 +570,212 @@ export default function Patients() {
         </div>
       )}
 
-      {admittedSuccessData && (
-        <div className="modal-backdrop" onClick={() => setAdmittedSuccessData(null)}>
-          <div className="modal-panel" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 480 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(34, 197, 94, 0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--ok, #22c55e)" }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700 }}>Patient Admitted Successfully</h3>
-                  <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>SMS &amp; Magic Access Link Generated</span>
-                </div>
-              </div>
-              <button className="modal-close-btn" onClick={() => setAdmittedSuccessData(null)}>✕</button>
-            </div>
+      {/* ── Patient Admission Success Modal ── */}
+      {admittedSuccessData && (() => {
+        const incMatch = incubators.find((i) => String(i._id) === String(admittedSuccessData.incubatorId?._id || admittedSuccessData.incubatorId));
+        const bedLabel = incMatch?.label || incMatch?.deviceTopicId || admittedSuccessData.incubatorId?.label || "NICU Bed";
+        const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
+        const effectiveMagicLink = admittedSuccessData.magicLink && !admittedSuccessData.magicLink.includes("localhost")
+          ? admittedSuccessData.magicLink
+          : `${currentOrigin}/patient/access?code=${admittedSuccessData.accessCode}`;
+        const cleanPhone = (admittedSuccessData.guardianPhone || "").replace(/[^0-9]/g, "");
+        const waText = encodeURIComponent(
+          formatGuardianCareUpdate({
+            patientName: admittedSuccessData.name,
+            guardianName: admittedSuccessData.guardianName,
+            incubatorLabel: bedLabel,
+            accessCode: admittedSuccessData.accessCode,
+            magicLink: effectiveMagicLink,
+          })
+        );
+        const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
 
-            <div style={{ background: "var(--bg-main)", padding: 14, borderRadius: 8, marginBottom: 16, border: "1px solid var(--border-subtle)" }}>
-              <div style={{ fontSize: 13, marginBottom: 6 }}>
-                <strong>Baby:</strong> {admittedSuccessData.name}
-              </div>
-              <div style={{ fontSize: 13, marginBottom: 6 }}>
-                <strong>Guardian:</strong> {admittedSuccessData.guardianName} ({admittedSuccessData.guardianPhone})
-              </div>
-              <div style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 8, marginTop: 10, paddingTop: 10, borderTop: "1px dashed var(--border-subtle)" }}>
-                <span>Unique Access Code:</span>
-                <span style={{ fontFamily: "IBM Plex Mono", fontSize: 16, fontWeight: 800, color: "var(--brand)", letterSpacing: "1px", background: "rgba(15, 76, 129, 0.1)", padding: "2px 8px", borderRadius: 4 }}>
-                  {admittedSuccessData.accessCode}
-                </span>
-              </div>
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", display: "block", marginBottom: 6 }}>
-                One-Click Magic Link (Sent to Guardian via SMS)
-              </label>
-              <div style={{ display: "flex", gap: 8 }}>
-                <input
-                  type="text"
-                  readOnly
-                  value={admittedSuccessData.magicLink || ""}
-                  style={{ fontSize: 12, fontFamily: "IBM Plex Mono", background: "var(--bg-surface)" }}
-                />
+        return (
+          <div className="modal-overlay" onClick={() => setAdmittedSuccessData(null)}>
+            <div className="admission-success-modal" onClick={(e) => e.stopPropagation()}>
+              {/* Header */}
+              <div className="admission-modal-header">
+                <div className="admission-modal-header-main">
+                  <div className="admission-modal-icon-badge">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="admission-modal-title">Patient Admitted Successfully</h3>
+                    <span className="admission-modal-subtitle">SMS &amp; Guardian Access Link Generated</span>
+                  </div>
+                </div>
                 <button
                   type="button"
-                  className="btn-small-outline"
-                  onClick={() => {
-                    navigator.clipboard.writeText(admittedSuccessData.magicLink || "");
-                    setCopiedLink(true);
-                    setTimeout(() => setCopiedLink(false), 2000);
-                  }}
-                  style={{ whiteSpace: "nowrap" }}
+                  className="admission-modal-close-btn"
+                  onClick={() => setAdmittedSuccessData(null)}
+                  title="Close popup"
+                  aria-label="Close"
                 >
-                  {copiedLink ? "Copied!" : "Copy Link"}
+                  ✕
                 </button>
               </div>
-              <div style={{ fontSize: 11, color: "var(--ok)", marginTop: 6, display: "flex", alignItems: "center", gap: 5 }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-                SMS alert dispatched to {admittedSuccessData.guardianPhone}
+
+              {/* Body */}
+              <div className="admission-modal-body">
+                {/* Patient Summary Card */}
+                <div className="admission-detail-card">
+                  <div className="admission-detail-row">
+                    <span className="admission-detail-label">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                      </svg>
+                      Baby / Infant
+                    </span>
+                    <span className="admission-detail-value">{admittedSuccessData.name}</span>
+                  </div>
+
+                  <div className="admission-detail-row">
+                    <span className="admission-detail-label">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                        <path d="M6 8h.01M6 12h.01M6 16h.01"></path>
+                      </svg>
+                      Assigned Bed
+                    </span>
+                    <span className="admission-detail-value">{bedLabel}</span>
+                  </div>
+
+                  <div className="admission-detail-row">
+                    <span className="admission-detail-label">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                      </svg>
+                      Guardian Contact
+                    </span>
+                    <span className="admission-detail-value">
+                      {admittedSuccessData.guardianName} ({admittedSuccessData.guardianPhone})
+                    </span>
+                  </div>
+                </div>
+
+                {/* Unique Access Code */}
+                <div className="admission-code-block">
+                  <div className="admission-code-meta">
+                    <span className="admission-code-title">Guardian Access Code</span>
+                    <span className="admission-code-value">{admittedSuccessData.accessCode}</span>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-small-outline"
+                    onClick={() => {
+                      navigator.clipboard.writeText(admittedSuccessData.accessCode || "");
+                      setCopiedCode(true);
+                      setTimeout(() => setCopiedCode(false), 2000);
+                    }}
+                    style={{ minWidth: 100, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                  >
+                    {copiedCode ? (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
+                        <span>Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                        <span>Copy Code</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Magic Link */}
+                <div className="admission-magiclink-group">
+                  <label className="admission-magiclink-label">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    One-Click Magic Link (Dispatched via SMS)
+                  </label>
+                  <div className="admission-magiclink-input-row">
+                    <input
+                      type="text"
+                      readOnly
+                      value={effectiveMagicLink}
+                      className="admission-magiclink-input"
+                      title={effectiveMagicLink}
+                    />
+                    <button
+                      type="button"
+                      className="btn-small-outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(effectiveMagicLink);
+                        setCopiedLink(true);
+                        setTimeout(() => setCopiedLink(false), 2000);
+                      }}
+                      style={{ minWidth: 95, height: 38, display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5 }}
+                    >
+                      {copiedLink ? (
+                        <>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          <span>Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                          </svg>
+                          <span>Copy Link</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  <div className="admission-sms-status-pill">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span>SMS alert dispatched to {admittedSuccessData.guardianPhone}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="admission-modal-footer">
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="admission-whatsapp-btn"
+                  title="Send care update & magic access link directly to parent via WhatsApp"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.582 2.128 2.182-.573c.978.58 1.911.928 3.145.929 3.178 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.771-5.764-5.771zm3.392 8.244c-.144.405-.837.774-1.17.824-.312.045-.694.074-1.127-.065-.268-.086-.615-.221-1.04-.407-1.802-.79-2.977-2.617-3.067-2.738-.09-.12-1.727-2.298-1.727-4.383 0-2.086 1.092-3.111 1.48-3.504.388-.393.847-.492 1.13-.492.283 0 .565.003.812.015.263.013.615-.1 1.014.86.417 1.002.997 2.43 1.084 2.607.087.177.145.385.029.615-.116.23-.174.373-.348.577-.174.204-.366.455-.523.611-.174.173-.356.363-.153.71.203.348.905 1.492 1.94 2.414 1.332 1.187 2.455 1.556 2.803 1.729.348.174.551.145.754-.087.203-.232.87-1.016 1.102-1.364.232-.348.464-.29.783-.174.319.116 2.029.957 2.377 1.13.348.174.58.261.667.406.087.145.087.84-.057 1.245z"/>
+                    <path d="M12 2C6.477 2 2 6.477 2 12c0 1.891.526 3.66 1.439 5.174L2 22l4.981-1.309A9.957 9.957 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18.053c-1.63 0-3.14-.492-4.405-1.333l-.316-.21-2.96.777.79-2.887-.231-.334A8.04 8.04 0 0 1 3.947 12c0-4.441 3.612-8.053 8.053-8.053 4.441 0 8.053 3.612 8.053 8.053 0 4.441-3.612 8.053-8.053 8.053z"/>
+                  </svg>
+                  <span>Notify via WhatsApp</span>
+                </a>
+
+                <button
+                  type="button"
+                  className="btn-primary admission-done-btn"
+                  onClick={() => setAdmittedSuccessData(null)}
+                >
+                  Done
+                </button>
               </div>
             </div>
-
-            {/* Modal Actions */}
-            <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginTop: 18 }}>
-              {(() => {
-                const cleanPhone = (admittedSuccessData.guardianPhone || "").replace(/[^0-9]/g, "");
-                const waText = encodeURIComponent(
-                  formatGuardianCareUpdate({
-                    patientName: admittedSuccessData.name,
-                    guardianName: admittedSuccessData.guardianName,
-                    incubatorLabel: admittedSuccessData.incubatorId?.label || "Incubator Bed",
-                    accessCode: admittedSuccessData.accessCode,
-                    magicLink: admittedSuccessData.magicLink,
-                  })
-                );
-                const waUrl = `https://wa.me/${cleanPhone}?text=${waText}`;
-
-                return (
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-small-outline"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      fontSize: 13,
-                      padding: "8px 14px",
-                      textDecoration: "none",
-                    }}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                    </svg>
-                    Notify via WhatsApp
-                  </a>
-                );
-              })()}
-
-              <button
-                type="button"
-                className="btn-primary"
-                style={{ padding: "8px 22px", fontSize: 13 }}
-                onClick={() => setAdmittedSuccessData(null)}
-              >
-                Done
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </Layout>
   );
 }
