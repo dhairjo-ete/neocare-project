@@ -81,6 +81,11 @@ function connectMQTT(io) {
       const data = JSON.parse(payload.toString());
 
       if (topic.endsWith("/vitals")) {
+        // Discard self-echoes from internal twin so it never suppresses or duplicates itself
+        if (data._source === "neocare_internal_twin") {
+          return;
+        }
+
         const { recordExternalMqtt } = require("../services/telemetrySimulator");
         recordExternalMqtt(data.device_id);
 
@@ -163,7 +168,8 @@ function publishVitals(deviceTopicId, payload) {
     return false;
   }
   const topic = `neocare/${deviceTopicId}/vitals`;
-  mqttClientInstance.publish(topic, JSON.stringify(payload), { qos: 1 });
+  const packet = { ...payload, _source: "neocare_internal_twin" };
+  mqttClientInstance.publish(topic, JSON.stringify(packet), { qos: 1 });
   return true;
 }
 
