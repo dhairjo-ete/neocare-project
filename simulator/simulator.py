@@ -566,8 +566,13 @@ def fetch_active_devices(backend_url: str, api_key: str) -> dict:
             timeout=8,
         )
         if resp.status_code != 200:
-            print(f"[api] Warning: active-simulation-devices returned {resp.status_code} - {resp.text[:200]}")
-            return {"active_ids": set(), "patient_map": {}, "all_ids": set()}
+            print(f"[api] Notice: active-simulation-devices returned {resp.status_code} - {resp.text[:200]}")
+            print("[fallback] Activating fallback telemetry streaming for 'bay_1_east'...")
+            return {
+                "active_ids": {"bay_1_east"},
+                "patient_map": {"bay_1_east": {"name": "Baby 1", "primarySyndrome": "Respiratory Distress Syndrome", "gestationalAgeWeeks": 35}},
+                "all_ids": {"bay_1_east"}
+            }
 
         data = resp.json()
         active_sims  = data.get("activeSimulations", [])
@@ -584,11 +589,22 @@ def fetch_active_devices(backend_url: str, api_key: str) -> dict:
         patient_map = {s["deviceTopicId"]: s["patient"] for s in active_sims}
         all_ids     = {i["deviceTopicId"] for i in all_incubs if i.get("deviceTopicId")}
 
+        # If database currently has no active beds registered, stream for bay_1_east as default
+        if not active_ids:
+            active_ids = {"bay_1_east"}
+            patient_map = {"bay_1_east": {"name": "Baby 1", "primarySyndrome": "Respiratory Distress Syndrome", "gestationalAgeWeeks": 35}}
+            all_ids.add("bay_1_east")
+
         return {"active_ids": active_ids, "patient_map": patient_map, "all_ids": all_ids}
 
     except Exception as e:
         print(f"[api] Could not reach backend: {e}")
-        return {"active_ids": set(), "patient_map": {}, "all_ids": set()}
+        print("[fallback] Activating fallback telemetry streaming for 'bay_1_east'...")
+        return {
+            "active_ids": {"bay_1_east"},
+            "patient_map": {"bay_1_east": {"name": "Baby 1", "primarySyndrome": "Respiratory Distress Syndrome", "gestationalAgeWeeks": 35}},
+            "all_ids": {"bay_1_east"}
+        }
 
 
 # ---------------------------------------------------------------------------
