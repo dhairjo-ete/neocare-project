@@ -27,6 +27,32 @@ export default function Dashboard() {
     }
   }, [searchParams]);
 
+  // Immediately load last known vitals & history from DB so we never hang on an empty spinner
+  useEffect(() => {
+    if (!selectedDevice) return;
+    axiosClient.get(`/vitals/${selectedDevice}/latest`)
+      .then(({ data }) => {
+        if (data && data.heart_rate) {
+          setDeviceMap((prev) => ({
+            ...prev,
+            [selectedDevice]: data,
+          }));
+        }
+      })
+      .catch(() => {});
+
+    axiosClient.get(`/vitals/${selectedDevice}`)
+      .then(({ data }) => {
+        if (Array.isArray(data) && data.length > 0) {
+          setHistoryMap((prev) => ({
+            ...prev,
+            [selectedDevice]: data.slice(-MAX_POINTS),
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [selectedDevice]);
+
   const onVitals = useCallback((vital) => {
     const devId = vital.device_id || "incubator_01";
 

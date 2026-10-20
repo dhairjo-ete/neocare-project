@@ -305,46 +305,76 @@ async function controlIncubator(req, res) {
 async function toggleIncubatorStatus(req, res) {
   try {
     const { id } = req.params;
-    const query = mongoose.Types.ObjectId.isValid(id)
-      ? { _id: id }
-      : { deviceTopicId: id };
+
+    // Flexible lookup: ObjectId, exact deviceTopicId, or label
+    let query;
+    if (mongoose.Types.ObjectId.isValid(id) && String(new mongoose.Types.ObjectId(id)) === id) {
+      query = { $or: [{ _id: id }, { deviceTopicId: id }] };
+    } else {
+      query = {
+        $or: [
+          { deviceTopicId: id },
+          { deviceTopicId: new RegExp(`^${id}$`, "i") },
+          { label: id },
+        ],
+      };
+    }
 
     const incubator = await Incubator.findOne(query);
     if (!incubator) {
-      return res.status(404).json({ error: "Incubator not found" });
+      return res.status(404).json({ error: "Incubator not found", message: `No incubator found matching '${id}'` });
     }
 
-    if (req.user.role !== "system_admin" && incubator.hospitalId.toString() !== req.user.hospitalId?.toString()) {
+    // Role check: hospital staff can only control their hospital's incubators
+    const incHospId = incubator.hospitalId?._id ? String(incubator.hospitalId._id) : (incubator.hospitalId ? String(incubator.hospitalId) : null);
+    const userHospId = req.user?.hospitalId?._id ? String(req.user.hospitalId._id) : (req.user?.hospitalId ? String(req.user.hospitalId) : null);
+
+    if (req.user?.role !== "system_admin" && incHospId && userHospId && incHospId !== userHospId) {
       return res.status(403).json({ error: "Forbidden - Incubator belongs to another hospital facility" });
     }
 
     const newStatus = incubator.status === "active" ? "maintenance" : "active";
-    incubator.status = newStatus;
-    await incubator.save();
+
+    // Use findByIdAndUpdate to safely update ONLY the status without triggering schema validation on legacy docs
+    const updatedIncubator = await Incubator.findByIdAndUpdate(
+      incubator._id,
+      { $set: { status: newStatus } },
+      { new: true }
+    );
 
     // Invalidate MQTT cache
-    const { invalidateIncubatorCache } = require("../config/mqtt");
-    invalidateIncubatorCache(incubator.deviceTopicId);
+    try {
+      const { invalidateIncubatorCache } = require("../config/mqtt");
+      invalidateIncubatorCache(updatedIncubator.deviceTopicId);
+    } catch (e) {}
 
-    // If turned active, ensure backend simulator engine is running so vitals stream immediately
-    const { startTelemetrySimulator, getSimulatorStatus } = require("../services/telemetrySimulator");
-    const simStatus = getSimulatorStatus();
-    if (newStatus === "active" && !simStatus.running) {
+    // Ensure backend simulator engine is running and trigger an immediate tick
+    try {
+      const { startTelemetrySimulator, getSimulatorStatus, triggerTickNow } = require("../services/telemetrySimulator");
+      const simStatus = getSimulatorStatus();
       const io = req.app.get("io");
-      if (io) startTelemetrySimulator(io);
-    }
+      if (io && (!simStatus.running || newStatus === "active")) {
+        startTelemetrySimulator(io);
+      }
+      if (typeof triggerTickNow === "function") {
+        triggerTickNow();
+      }
+    } catch (e) {}
 
     // Emit live sync event
-    emitDataChange("incubator", "update", incubator, incubator.hospitalId);
+    try {
+      emitDataChange("incubator", "update", updatedIncubator, updatedIncubator.hospitalId);
+    } catch (e) {}
 
     res.json({
       success: true,
-      incubator,
-      status: incubator.status,
-      message: `Incubator ${incubator.label || incubator.deviceTopicId} is now ${incubator.status.toUpperCase()}`,
+      incubator: updatedIncubator,
+      status: updatedIncubator.status,
+      message: `Incubator ${updatedIncubator.label || updatedIncubator.deviceTopicId} is now ${updatedIncubator.status.toUpperCase()}`,
     });
   } catch (err) {
-    res.status(500).json({ error: "Failed to toggle incubator status", message: err.message });
+    console.error("[incubators] toggleIncubatorStatus error:", err);
+    res.status(500).json({ error: "Failed to update incubator status", message: err.message });
   }
 }
 

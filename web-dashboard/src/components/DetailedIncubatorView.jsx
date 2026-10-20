@@ -79,7 +79,7 @@ export default function DetailedIncubatorView({
       setTimeout(() => setStatusMsg(""), 3500);
     } catch (err) {
       console.error("Failed to toggle incubator status:", err);
-      const errMsg = err?.response?.data?.error || "Failed to update incubator status";
+      const errMsg = err?.response?.data?.message || err?.response?.data?.error || "Failed to update incubator status";
       alert(errMsg);
     } finally {
       setIsTogglingStatus(false);

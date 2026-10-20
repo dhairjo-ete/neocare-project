@@ -13,6 +13,7 @@
  * - Automatic handoff: Steps aside if external physical hardware or MQTT script connects.
  */
 
+const mongoose = require("mongoose");
 const Vital = require("../models/Vital");
 const Incubator = require("../models/Incubator");
 const Patient = require("../models/Patient");
@@ -465,24 +466,46 @@ async function simulationTick() {
   if (!ioInstance) return;
 
   try {
-    // Find all active incubators
-    const incubators = await Incubator.find({ status: "active" });
-    if (!incubators.length) return;
-
-    // Find all currently admitted patients
+    // 1. Find all currently admitted patients
     const activePatients = await Patient.find({ dischargedAt: null });
-    const patientByIncubator = new Map();
+    const patientByIncubatorId = new Map();
+    const patientByDeviceTopic = new Map();
+
     for (const p of activePatients) {
       if (p.incubatorId) {
-        patientByIncubator.set(String(p.incubatorId), p);
+        const idStr = p.incubatorId._id ? String(p.incubatorId._id) : String(p.incubatorId);
+        patientByIncubatorId.set(idStr, p);
+        if (p.incubatorId.deviceTopicId) {
+          patientByDeviceTopic.set(p.incubatorId.deviceTopicId, p);
+        }
       }
     }
+
+    // 2. Find incubators: either status="active", OR currently has an admitted baby assigned!
+    const admittedIncubatorIds = Array.from(patientByIncubatorId.keys())
+      .filter((id) => mongoose.Types.ObjectId.isValid(id))
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    const incubators = await Incubator.find({
+      $or: [
+        { status: "active" },
+        { _id: { $in: admittedIncubatorIds } },
+      ],
+    });
+
+    if (!incubators.length) return;
 
     const now = Date.now();
 
     for (const inc of incubators) {
       const devKey = inc.deviceTopicId || `incubator_${String(inc._id).slice(-4)}`;
-      const patient = patientByIncubator.get(String(inc._id));
+      const patient = patientByIncubatorId.get(String(inc._id)) || patientByDeviceTopic.get(inc.deviceTopicId);
+
+      // Auto-heal: If an admitted infant is in this bed, ensure incubator is active
+      if (patient && inc.status !== "active") {
+        inc.status = "active";
+        Incubator.updateOne({ _id: inc._id }, { $set: { status: "active" } }).catch(() => {});
+      }
 
       // Guard 1: Empty incubator -> broadcast standby signal so UI stays in sync
       if (!patient) {
@@ -594,10 +617,17 @@ function getSimulatorStatus() {
   };
 }
 
+function triggerTickNow() {
+  if (ioInstance) {
+    setImmediate(simulationTick);
+  }
+}
+
 module.exports = {
   startTelemetrySimulator,
   stopTelemetrySimulator,
   getSimulatorStatus,
+  triggerTickNow,
   recordExternalMqtt,
   applyTwinActuators,
   setSimulationScenario,
