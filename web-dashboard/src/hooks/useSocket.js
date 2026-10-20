@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { io } from "socket.io-client";
 import { showDesktopAlert } from "../utils/desktopNotification";
+import { SOCKET_URL } from "../api/socketUrl";
 
 export function useSocket(
   onVitals,
@@ -31,7 +32,7 @@ export function useSocket(
   });
 
   useEffect(() => {
-    const socket = io(import.meta.env.VITE_SOCKET_URL, {
+    const socket = io(SOCKET_URL, {
       auth: { token: localStorage.getItem("neocare_token") },
       transports: ["websocket", "polling"],
       reconnectionAttempts: 30,

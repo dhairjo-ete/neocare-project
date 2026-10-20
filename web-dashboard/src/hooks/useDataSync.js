@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../api/socketUrl";
 
 /**
  * Custom hook to listen for real-time data change events
@@ -10,7 +11,7 @@ export function useDataSync(onDataChange) {
   useEffect(() => {
     if (!onDataChange) return;
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL, { auth: { token: localStorage.getItem("neocare_token") } });
+    const socket = io(SOCKET_URL, { auth: { token: localStorage.getItem("neocare_token") } });
 
     socket.on("data:change", (changeEvent) => {
       onDataChange(changeEvent);

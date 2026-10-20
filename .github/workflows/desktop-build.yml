@@ -1,0 +1,51 @@
+name: Build Cross-Platform Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: web-dashboard/package-lock.json
+
+      - name: Install Dependencies
+        run: npm --prefix web-dashboard install
+
+      - name: Build Web Dashboard
+        run: npm --prefix web-dashboard run build
+
+      - name: Package Desktop App (Windows)
+        if: matrix.os == 'windows-latest'
+        run: npm --prefix web-dashboard run electron:build
+
+      - name: Package Desktop App (macOS)
+        if: matrix.os == 'macos-latest'
+        run: npx electron-builder --mac
+        working-directory: web-dashboard
+
+      - name: Package Desktop App (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: npx electron-builder --linux
+        working-directory: web-dashboard
+
+      - name: Upload Desktop Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: NeoCare-Desktop-${{ matrix.os }}
+          path: web-dashboard/release/*

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { safeHref } from "../utils/safeUrl";
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../api/socketUrl";
 import axiosClient from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 import { requestDesktopNotificationPermission } from "../utils/desktopNotification";
@@ -52,7 +53,7 @@ export default function MarqueeBanner() {
     fetchActiveAnnouncements();
 
     // Setup Socket.io real-time connection
-    const socket = io(import.meta.env.VITE_SOCKET_URL, { auth: { token: localStorage.getItem("neocare_token") } });
+    const socket = io(SOCKET_URL, { auth: { token: localStorage.getItem("neocare_token") } });
 
     // Join hospital socket room
     socket.emit("join:room", {

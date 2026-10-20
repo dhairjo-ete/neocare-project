@@ -1,11 +1,17 @@
 {
   "name": "neocare-web-dashboard",
   "version": "1.0.0",
+  "description": "NeoCare - Neonatal Telemetry & NICU Management System",
+  "main": "electron/main.cjs",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "electron:start": "electron .",
+    "electron:pack": "vite build && electron-builder --dir",
+    "electron:build": "vite build && electron-builder --win",
+    "electron:dist": "vite build && electron-builder -mwl"
   },
   "dependencies": {
     "axios": "^1.7.2",
@@ -18,6 +24,50 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
+    "electron": "^44.9.1",
+    "electron-builder": "^26.15.3",
     "vite": "^5.3.4"
+  },
+  "build": {
+    "appId": "com.neocare.telemetry",
+    "productName": "NeoCare",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NeoCare NICU"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "category": "public.app-category.medical-software"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Medical"
+    }
   }
 }

@@ -1,7 +1,13 @@
 import axios from "axios";
 
+const defaultBaseUrl =
+  import.meta.env.VITE_API_URL ||
+  (typeof window !== "undefined" && window.location.protocol !== "file:" && window.location.origin.includes("localhost")
+    ? "http://localhost:5000/api"
+    : "https://neocare-backend-saqj.onrender.com/api");
+
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: defaultBaseUrl,
 });
 
 axiosClient.interceptors.request.use((config) => {
@@ -19,8 +25,13 @@ axiosClient.interceptors.response.use(
       localStorage.removeItem("neocare_token");
       localStorage.removeItem("neocare_user");
       // Only redirect if not already on login/signup page
-      if (!window.location.pathname.includes("/login") && !window.location.pathname.includes("/signup")) {
-        window.location.href = "/login";
+      const current = (window.location.pathname + window.location.hash).toLowerCase();
+      if (!current.includes("login") && !current.includes("signup")) {
+        if (window.location.protocol === "file:") {
+          window.location.hash = "#/login";
+        } else {
+          window.location.href = "/login";
+        }
       }
     }
     return Promise.reject(error);

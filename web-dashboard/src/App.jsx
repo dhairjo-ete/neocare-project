@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import Home from "./pages/Home";
@@ -89,14 +89,23 @@ function AppRoutes() {
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
+const isElectron = typeof window !== "undefined" && (
+  Boolean(window.process?.type) ||
+  Boolean(window.electron) ||
+  window.location.protocol === "file:" ||
+  navigator.userAgent.toLowerCase().includes("electron")
+);
+
+const Router = isElectron ? HashRouter : BrowserRouter;
+
 export default function App() {
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <Router>
             <AppRoutes />
-          </BrowserRouter>
+          </Router>
         </AuthProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
+import { SOCKET_URL } from "../api/socketUrl";
 import axiosClient from "../api/axiosClient";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -39,7 +40,7 @@ export default function NotificationBell() {
     loadNotifications();
 
     // Connect to socket and join the right room
-    const socket = io(import.meta.env.VITE_SOCKET_URL, { auth: { token: localStorage.getItem("neocare_token") } });
+    const socket = io(SOCKET_URL, { auth: { token: localStorage.getItem("neocare_token") } });
     socket.emit("join:room", {
       role: user.role,
       hospitalId: user.hospitalId,
