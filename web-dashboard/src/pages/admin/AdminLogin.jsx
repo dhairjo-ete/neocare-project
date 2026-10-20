@@ -19,7 +19,11 @@ export default function AdminLogin() {
       await login(email, password, "system_admin");
       navigate("/admin/overview");
     } catch (err) {
-      setError(err?.response?.data?.error || "Access denied. Valid System Administrator credentials required.");
+      if (err?.code === "ERR_NETWORK" || !err?.response) {
+        setError("Cannot connect to NeoCare server. Please check your network connection.");
+      } else {
+        setError(err?.response?.data?.error || "Access denied. Valid System Administrator credentials required.");
+      }
     } finally {
       setLoading(false);
     }

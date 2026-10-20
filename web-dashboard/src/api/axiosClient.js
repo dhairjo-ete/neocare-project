@@ -1,16 +1,33 @@
 import axios from "axios";
 
-const defaultBaseUrl =
-  import.meta.env.VITE_API_URL ||
-  (typeof window !== "undefined" && window.location.protocol !== "file:" && window.location.origin.includes("localhost")
-    ? "http://localhost:5000/api"
-    : "https://neocare-backend-saqj.onrender.com/api");
+export function getBaseApiUrl() {
+  const custom = typeof localStorage !== "undefined" ? localStorage.getItem("neocare_custom_api_url") : null;
+  if (custom) return custom.replace(/\/+$/, "");
+
+  const isDesktop = typeof window !== "undefined" && (
+    window.location.protocol === "file:" ||
+    Boolean(window.electron) ||
+    navigator.userAgent.toLowerCase().includes("electron")
+  );
+
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (isDesktop && (!envUrl || envUrl.includes("localhost"))) {
+    return "https://neocare-backend-saqj.onrender.com/api";
+  }
+
+  if (typeof window !== "undefined" && window.location.protocol !== "file:" && window.location.origin.includes("localhost")) {
+    return envUrl || "http://localhost:5000/api";
+  }
+
+  return envUrl || "https://neocare-backend-saqj.onrender.com/api";
+}
 
 const axiosClient = axios.create({
-  baseURL: defaultBaseUrl,
+  baseURL: getBaseApiUrl(),
 });
 
 axiosClient.interceptors.request.use((config) => {
+  config.baseURL = getBaseApiUrl();
   const token = localStorage.getItem("neocare_token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;

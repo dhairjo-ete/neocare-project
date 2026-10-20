@@ -38,6 +38,8 @@ export default function Login() {
         setStatusMsg("Your email is not verified yet. Please check your inbox for the verification link.");
       } else if (resp?.code === "AWAITING_APPROVAL") {
         setStatusMsg(resp.error);
+      } else if (err?.code === "ERR_NETWORK" || !err?.response) {
+        setError("Cannot connect to NeoCare server. Please check your network connection.");
       } else {
         setError(resp?.error || "Invalid credentials. Please verify your details.");
       }
