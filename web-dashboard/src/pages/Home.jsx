@@ -345,9 +345,8 @@ export default function Home() {
 
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <a
-                  href="https://github.com/dhairjo-ete/neocare-project/releases/download/v1.0.0/NeoCare.Setup.1.0.0.exe"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || "https://github.com/dhairjo-ete/neocare-project/releases/latest/download/NeoCare.Setup.1.0.0.exe"}
+                  download="NeoCare-Setup-1.0.0.exe"
                   className="btn-primary"
                   style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", textDecoration: "none", fontSize: 14 }}
                 >
@@ -356,17 +355,7 @@ export default function Home() {
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  <span>Download Installer (.exe)</span>
-                </a>
-
-                <a
-                  href="https://github.com/dhairjo-ete/neocare-project/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-small-outline"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "8px 16px", textDecoration: "none", fontSize: 12.5 }}
-                >
-                  <span>View GitHub Releases &amp; Changelog &#8594;</span>
+                  <span>Download Installer for Windows (.exe)</span>
                 </a>
               </div>
             </div>
