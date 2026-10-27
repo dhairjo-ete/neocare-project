@@ -89,12 +89,17 @@ export default function PublicHeader() {
       <div className="header-right">
         {/* On public website, show quick Download Desktop App button */}
         {!isElectron && (
-          <Link to="/#download-section" className="btn-header-download" title="Download NeoCare Desktop App (.exe for Windows)">
+          <a
+            href="https://github.com/dhairjo-ete/neocare-project/releases/latest/download/NeoCare.Setup.1.0.0.exe"
+            download="NeoCare-Setup.exe"
+            className="btn-header-download"
+            title="Download NeoCare Desktop App (.exe for Windows)"
+          >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
               <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.901-1.799"/>
             </svg>
             <span>Get App</span>
-          </Link>
+          </a>
         )}
 
         <ThemeToggle />

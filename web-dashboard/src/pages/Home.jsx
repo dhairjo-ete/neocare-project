@@ -6,15 +6,32 @@ import axiosClient from "../api/axiosClient";
 const TRACE_PATH =
   "M0,35 L40,35 L48,35 L54,12 L62,58 L70,35 L76,35 L84,22 L92,48 L100,35 L160,35 L168,35 L174,12 L182,58 L190,35 L196,35 L204,22 L212,48 L220,35 L280,35 L288,35 L294,12 L302,58 L310,35 L316,35 L324,22 L332,48 L340,35 L400,35";
 
+export const DIRECT_DOWNLOAD_URL =
+  import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
+  "https://github.com/dhairjo-ete/neocare-project/releases/latest/download/NeoCare.Setup.1.0.0.exe";
+
 export default function Home() {
   const [stats, setStats] = useState({ hospitals: 0, doctors: 0, nurses: 0 });
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [downloadStarted, setDownloadStarted] = useState(false);
 
   useEffect(() => {
     axiosClient.get("/stats")
       .then(({ data }) => setStats(data))
       .catch(() => {});
   }, []);
+
+  function handleDownloadClick() {
+    setDownloadStarted(true);
+    setShowDownloadModal(true);
+    // Directly trigger browser download without navigating away
+    const link = document.createElement("a");
+    link.href = DIRECT_DOWNLOAD_URL;
+    link.download = "NeoCare.Setup.1.0.0.exe";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 
   return (
     <div className="home-page-container">
@@ -47,7 +64,7 @@ export default function Home() {
               <button
                 type="button"
                 className="btn-cta-download"
-                onClick={() => setShowDownloadModal(true)}
+                onClick={handleDownloadClick}
                 title="Download NeoCare Desktop Installer for Windows (.exe)"
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
@@ -170,7 +187,7 @@ export default function Home() {
               <button
                 type="button"
                 className="btn-cta-download"
-                onClick={() => setShowDownloadModal(true)}
+                onClick={handleDownloadClick}
                 style={{ fontSize: 14, padding: "12px 24px" }}
               >
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
@@ -337,26 +354,35 @@ export default function Home() {
                   Quick Installation Guide:
                 </div>
                 <ol style={{ margin: 0, paddingLeft: 18, fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                  <li>Download <strong>NeoCare Setup 1.0.0.exe</strong>.</li>
-                  <li>Double-click the installer to setup on your PC.</li>
+                  <li>Open the downloaded <strong>NeoCare.Setup.1.0.0.exe</strong> file.</li>
+                  <li>Follow the on-screen setup prompts (takes ~10 seconds).</li>
                   <li>Launch from your Desktop shortcut and sign in.</li>
                 </ol>
               </div>
 
+              {downloadStarted && (
+                <div className="admission-sms-status-pill" style={{ width: "100%", justifyContent: "center", boxSizing: "border-box", padding: "8px 12px" }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  <span>Download started! Check your browser's download manager.</span>
+                </div>
+              )}
+
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <a
-                  href={import.meta.env.VITE_DESKTOP_DOWNLOAD_URL || "https://github.com/dhairjo-ete/neocare-project/releases/latest/download/NeoCare.Setup.1.0.0.exe"}
-                  download="NeoCare-Setup-1.0.0.exe"
+                <button
+                  type="button"
+                  onClick={handleDownloadClick}
                   className="btn-primary"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", textDecoration: "none", fontSize: 14 }}
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", fontSize: 14, cursor: "pointer" }}
                 >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  <span>Download Installer for Windows (.exe)</span>
-                </a>
+                  <span>{downloadStarted ? "Download Again (.exe)" : "Download Installer (.exe)"}</span>
+                </button>
               </div>
             </div>
 
