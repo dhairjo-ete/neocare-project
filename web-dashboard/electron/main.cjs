@@ -17,12 +17,15 @@ if (!gotTheLock) {
 }
 
 function createWindow() {
+  const iconPath = path.join(__dirname, "icon.ico");
+
   mainWindow = new BrowserWindow({
     width: 1320,
     height: 880,
     minWidth: 960,
     minHeight: 640,
     title: "NeoCare - Neonatal Telemetry & NICU Monitoring System",
+    icon: iconPath,
     backgroundColor: "#0b0f19",
     show: false,
     webPreferences: {
@@ -46,7 +49,7 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
   }
 
-  // Intercept external links (e.g. WhatsApp, documentation, external URLs)
+  // Intercept window open / target="_blank" links (opens in user's default browser)
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("http:") || url.startsWith("https:") || url.startsWith("mailto:")) {
       shell.openExternal(url);
@@ -55,9 +58,9 @@ function createWindow() {
     return { action: "allow" };
   });
 
-  // Handle in-page navigations to external sites
+  // Handle in-page navigations to external sites (opens in user's default browser)
   mainWindow.webContents.on("will-navigate", (event, url) => {
-    if (url.startsWith("https://wa.me/") || url.startsWith("https://api.whatsapp.com/")) {
+    if (url.startsWith("http:") || url.startsWith("https:") || url.startsWith("mailto:")) {
       event.preventDefault();
       shell.openExternal(url);
     }
@@ -126,18 +129,31 @@ function createApplicationMenu() {
       label: "Help",
       submenu: [
         {
-          label: "NeoCare Cloud Portal",
+          label: "About NeoCare",
+          click: async () => {
+            await shell.openExternal("https://neocaretelemetry.netlify.app/about");
+          },
+        },
+        {
+          label: "Support & FAQs",
+          click: async () => {
+            await shell.openExternal("https://neocaretelemetry.netlify.app/support-faqs");
+          },
+        },
+        {
+          label: "NeoCare Official Website",
           click: async () => {
             await shell.openExternal("https://neocaretelemetry.netlify.app");
           },
         },
+        { type: "separator" },
         {
-          label: "About NeoCare",
+          label: "App Information",
           click: () => {
             const { dialog } = require("electron");
             dialog.showMessageBox(mainWindow, {
               type: "info",
-              title: "About NeoCare Desktop",
+              title: "NeoCare Clinical Workstation",
               message: "NeoCare NICU Management & Telemetry Suite",
               detail: `Version: ${app.getVersion()}\nPlatform: ${process.platform} (${process.arch})\nElectron: ${process.versions.electron}\nNode: ${process.versions.node}`,
             });

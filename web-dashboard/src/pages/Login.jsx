@@ -193,9 +193,23 @@ export default function Login() {
           {/* Desktop Workstation Quick Navigation */}
           {isElectron && (
             <div className="desktop-login-quick-links">
-              <Link to="/about">About NeoCare</Link>
+              <a
+                href="https://neocaretelemetry.netlify.app/about"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open About NeoCare on the official website"
+              >
+                About NeoCare &#8599;
+              </a>
               <span className="dot-sep">·</span>
-              <Link to="/support-faqs">Support &amp; FAQs</Link>
+              <a
+                href="https://neocaretelemetry.netlify.app/support-faqs"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open Support & FAQs on the official website"
+              >
+                Support &amp; FAQs &#8599;
+              </a>
               <span className="dot-sep">·</span>
               <Link to="/signup">Register Staff</Link>
             </div>

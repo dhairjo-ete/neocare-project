@@ -43,12 +43,7 @@ export default function PublicHeader() {
   const isSignup   = location.pathname === "/signup";
 
   const navLinks = isElectron
-    ? [
-        { to: "/login", label: "Sign In", active: isLogin },
-        { to: "/signup", label: "Register Hospital", active: isSignup },
-        { to: "/about", label: "About NeoCare", active: isAbout },
-        { to: "/support-faqs", label: "Support & FAQs", active: isFaqs },
-      ]
+    ? []
     : [
         { to: "/", label: "Home", active: isHome },
         { to: "/about", label: "About", active: isAbout },

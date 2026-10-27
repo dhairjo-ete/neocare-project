@@ -41,6 +41,7 @@
       "package.json"
     ],
     "win": {
+      "icon": "electron/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -55,7 +56,9 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "NeoCare NICU"
+      "shortcutName": "NeoCare NICU",
+      "installerIcon": "electron/icon.ico",
+      "uninstallerIcon": "electron/icon.ico"
     },
     "mac": {
       "target": [
