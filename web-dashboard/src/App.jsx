@@ -1,6 +1,7 @@
 import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
+import { isElectron } from "./utils/isElectron";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import SystemOverview from "./pages/SystemOverview";
@@ -47,9 +48,10 @@ function RequireRole({ roles, children }) {
 function AppRoutes() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      {/* In Electron desktop software, start directly at login (no home/overview) */}
+      <Route path="/" element={isElectron ? <Navigate to="/login" replace /> : <Home />} />
       <Route path="/about" element={<About />} />
-      <Route path="/system-overview" element={<SystemOverview />} />
+      <Route path="/system-overview" element={isElectron ? <Navigate to="/login" replace /> : <SystemOverview />} />
       <Route path="/support-faqs" element={<SupportFaqs />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
@@ -82,19 +84,12 @@ function AppRoutes() {
         <RequireRole roles={["system_admin", "hospital_admin"]}><Users /></RequireRole>
       } />
 
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<Navigate to={isElectron ? "/login" : "/"} replace />} />
     </Routes>
   );
 }
 
 import ErrorBoundary from "./components/ErrorBoundary";
-
-const isElectron = typeof window !== "undefined" && (
-  Boolean(window.process?.type) ||
-  Boolean(window.electron) ||
-  window.location.protocol === "file:" ||
-  navigator.userAgent.toLowerCase().includes("electron")
-);
 
 const Router = isElectron ? HashRouter : BrowserRouter;
 

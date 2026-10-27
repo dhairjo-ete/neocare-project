@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import PublicHeader from "../components/PublicHeader";
+import { isElectron } from "../utils/isElectron";
 
 const PORTALS = [
   { key: "patient", label: "Parent / Guardian" },
@@ -15,11 +16,22 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [statusMsg, setStatusMsg] = useState("");
-  const { login } = useAuth();
+  const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const justRegistered = location.state?.justRegistered;
   const registrationMsg = location.state?.message;
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.role === "patient") {
+        navigate("/patient/dashboard", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
+    }
+  }, [user, navigate]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -58,7 +70,14 @@ export default function Login() {
 
       <div className="login-shell">
         <div className="login-panel" style={{ maxWidth: 440 }}>
-          <div className="login-brand">Portal Login</div>
+          {isElectron && (
+            <div className="desktop-app-banner">
+              <span className="status-dot"></span>
+              <span>NeoCare Clinical Workstation</span>
+              <span className="desktop-app-version">v1.0.0</span>
+            </div>
+          )}
+          <div className="login-brand">{isElectron ? "Workstation Sign In" : "Portal Login"}</div>
 
           {/* Portal selector tabs */}
           <div className="portal-tabs">
@@ -170,6 +189,17 @@ export default function Login() {
               Platform Administration Portal &#8594;
             </Link>
           </div>
+
+          {/* Desktop Workstation Quick Navigation */}
+          {isElectron && (
+            <div className="desktop-login-quick-links">
+              <Link to="/about">About NeoCare</Link>
+              <span className="dot-sep">·</span>
+              <Link to="/support-faqs">Support &amp; FAQs</Link>
+              <span className="dot-sep">·</span>
+              <Link to="/signup">Register Staff</Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

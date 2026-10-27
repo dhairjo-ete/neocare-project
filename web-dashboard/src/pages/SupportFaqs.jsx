@@ -9,45 +9,41 @@ const FAQS = [
     questions: [
       {
         q: "What are the clinical threshold ranges for neonatal vitals?",
-        a: "NeoCare monitors three core vital parameters: Heart Rate (normal range: 100 - 180 bpm), SpO2 Oxygen Concentration (normal range: 94% - 100%), and Incubator Microclimate Temperature (normal range: 36.0°C - 37.8°C). Any sustained reading outside these bounds triggers an automated emergency alarm."
+        a: "NeoCare monitors three critical parameters: Heart Rate (nominal: 100–180 bpm), SpO2 Oxygen Concentration (nominal: 94%–100%), and Incubator Microclimate Temperature (nominal: 36.0°C–37.8°C). Any sustained reading outside these bounds triggers immediate emergency alerts."
       },
       {
-        q: "How does the dual-tone audio alarm work in the browser?",
-        a: "NeoCare utilizes the browser's native Web Audio API to sound repeating dual-tone medical chimes during critical alarms. Due to modern browser autoplay policies, click anywhere on the page to unlock audio playback. Audio chimes repeat until manually acknowledged by an attending nurse or doctor."
+        q: "How does the emergency audio alarm work?",
+        a: "NeoCare generates repeating dual-tone audio alarms during Bradycardia, Tachycardia, and Hypoxia events. The alarm repeats continuously until an attending nurse or doctor acknowledges the alert."
       },
       {
         q: "How do attending caregivers silence or acknowledge alerts?",
-        a: "Attending staff can click the 'Acknowledge' button next to any active alert in the Live Dashboard Alert Panel. Acknowledging an alert silences the repeating audio chime and updates the alert log with the caregiver's identity and timestamp."
+        a: "Attending staff click 'Acknowledge' on the active alert in the Live Dashboard. Acknowledging an alert silences the chime and logs the caregiver's name and timestamp."
       }
     ]
   },
   {
-    category: "Account, Verification & Portal Access",
+    category: "Account & Portal Access",
     questions: [
       {
-        q: "Why does my account say 'Awaiting Approval' when I try to log in?",
-        a: "NeoCare enforces a 2-stage verification workflow. After verifying your email address, your account must be approved by your hospital administrator (for doctors and nurses) or by a system administrator (for hospital accounts) before portal access is granted."
+        q: "Why does my account say 'Awaiting Approval'?",
+        a: "NeoCare uses dual-stage verification for clinical safety. After verifying your email, your account must be approved by your Hospital Administrator (for doctors and nurses) or by a System Administrator before access is enabled."
       },
       {
-        q: "Can a doctor or nurse log in through the System Admin portal?",
-        a: "No. NeoCare enforces strict portal scoping. System Administrators can only log in through the System Admin portal tab, Hospital Admins through the Hospital Admin portal, and Doctors/Nurses through the Staff portal. Cross-portal logins are blocked."
-      },
-      {
-        q: "Does System Admin require email verification or admin approval?",
-        a: "System Administrator accounts bypass email verification and admin approval requirements to ensure root platform accessibility is never locked out during emergency infrastructure maintenance."
+        q: "Are the different hospital roles isolated?",
+        a: "Yes. System Administrators access platform governance, Hospital Admins manage hospital wards and incubators, Doctors and Nurses access bedside telemetry, and Guardians use their SMS magic access code."
       }
     ]
   },
   {
-    category: "Multi-Tenant Security & Isolation",
+    category: "Hospital Data Security",
     questions: [
       {
-        q: "Can medical staff view patient vitals from another hospital?",
-        a: "No. Every user account is cryptographically bound to their specific hospital tenant. Doctors and nurses only receive MQTT feeds and patient records associated with their assigned hospital and wards."
+        q: "Can clinical staff view patients from another hospital?",
+        a: "No. All accounts and feeds are cryptographically bound to their registered hospital tenant. Staff can only access incubators and patients assigned to their hospital and ward."
       },
       {
-        q: "How are incubators and wards provisioned?",
-        a: "Hospital Administrators create wards and provision incubators within their hospital console. Each incubator receives a unique device ID (e.g., incubator_01) which publishes vitals over secure MQTT topics."
+        q: "How do incubators connect to NeoCare?",
+        a: "Incubators connect securely via unique device IDs over encrypted MQTT topics, streaming vitals directly to the hospital's cloud dashboard with sub-second latency."
       }
     ]
   }
@@ -71,19 +67,18 @@ export default function SupportFaqs() {
 
   return (
     <div className="home-page-container">
-      {/* Public Header */}
       <PublicHeader />
 
       {/* Hero Banner */}
       <div className="hero-wrapper" style={{ paddingBottom: 40 }}>
         <section className="section" style={{ paddingTop: 48, paddingBottom: 32 }}>
-          <div className="section-tag">Help & Knowledge Base</div>
-          <h1 className="hero-title" style={{ fontSize: 40, marginBottom: 16 }}>
-            Support & Frequently <br />
+          <div className="section-tag">Help &amp; Knowledge Base</div>
+          <h1 className="hero-title" style={{ fontSize: 38, marginBottom: 16 }}>
+            Support &amp; Frequently <br />
             <span className="text-gradient">Asked Questions</span>
           </h1>
-          <p className="hero-body" style={{ maxWidth: 680 }}>
-            Find answers to common questions regarding clinical thresholds, alarm workflows, multi-tenant portal security, and system administration.
+          <p className="hero-body" style={{ maxWidth: 640 }}>
+            Quick answers regarding clinical thresholds, alarm workflows, portal access, and institutional security.
           </p>
 
           {/* Live System Stats */}
@@ -101,7 +96,7 @@ export default function SupportFaqs() {
               <span className="metric-label">System Availability</span>
             </div>
             <div className="metric-item">
-              <span className="metric-value">Sub-Second</span>
+              <span className="metric-value">&lt; 200ms</span>
               <span className="metric-label">Alarm Dispatch Speed</span>
             </div>
           </div>
@@ -111,9 +106,9 @@ export default function SupportFaqs() {
       {/* FAQ Sections */}
       <section className="section">
         {FAQS.map((cat, catIdx) => (
-          <div key={catIdx} style={{ marginBottom: 48 }}>
+          <div key={catIdx} style={{ marginBottom: 40 }}>
             <div className="section-tag">{cat.category}</div>
-            <h2 className="section-heading" style={{ fontSize: 24, marginBottom: 20 }}>{cat.category}</h2>
+            <h2 className="section-heading" style={{ fontSize: 22, marginBottom: 18 }}>{cat.category}</h2>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {cat.questions.map((item) => {
@@ -125,10 +120,10 @@ export default function SupportFaqs() {
                     key={currentIdx}
                     style={{
                       background: "var(--panel)",
-                      border: `1px solid ${isOpen ? "var(--brand)" : "var(--border)"}`,
-                      borderRadius: "var(--radius-lg)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius)",
                       overflow: "hidden",
-                      transition: "all 0.2s ease",
+                      transition: "border-color 0.15s ease",
                     }}
                   >
                     <button
@@ -136,27 +131,52 @@ export default function SupportFaqs() {
                       onClick={() => toggleFaq(currentIdx)}
                       style={{
                         width: "100%",
-                        padding: "18px 22px",
-                        background: "transparent",
-                        border: "none",
-                        color: "var(--text-primary)",
-                        fontSize: 16,
-                        fontWeight: 600,
-                        textAlign: "left",
+                        padding: "16px 20px",
                         display: "flex",
-                        justifyContent: "space-between",
                         alignItems: "center",
+                        justifyContent: "space-between",
+                        background: "none",
+                        border: "none",
                         cursor: "pointer",
+                        textAlign: "left",
+                        color: "var(--text-primary)",
+                        fontWeight: 600,
+                        fontSize: 15,
+                        gap: 12,
                       }}
                     >
                       <span>{item.q}</span>
-                      <span style={{ color: "var(--brand)", fontSize: 20, transition: "transform 0.2s ease", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                        ▼
-                      </span>
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{
+                          transform: isOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                          flexShrink: 0,
+                          color: "var(--brand)",
+                        }}
+                      >
+                        <polyline points="6 9 12 15 18 9" />
+                      </svg>
                     </button>
 
                     {isOpen && (
-                      <div style={{ padding: "0 22px 20px", color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.65, borderTop: "1px solid var(--border-subtle)", paddingTop: 14 }}>
+                      <div
+                        style={{
+                          padding: "0 20px 18px",
+                          color: "var(--text-secondary)",
+                          fontSize: 14,
+                          lineHeight: 1.6,
+                          borderTop: "1px solid var(--border-subtle)",
+                          paddingTop: 14,
+                        }}
+                      >
                         {item.a}
                       </div>
                     )}
@@ -166,19 +186,6 @@ export default function SupportFaqs() {
             </div>
           </div>
         ))}
-      </section>
-
-      {/* Contact Support Banner */}
-      <section className="section" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="feature-card" style={{ background: "var(--panel-raised)", border: "1px solid var(--brand)", padding: 32, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 20 }}>
-          <div>
-            <h3 style={{ fontSize: 20, marginBottom: 6, color: "var(--text-primary)" }}>Still need clinical or technical assistance?</h3>
-            <p style={{ color: "var(--text-secondary)", margin: 0 }}>Our technical support team is available for hospital onboarding and hardware integration.</p>
-          </div>
-          <a href="mailto:admin.neocare@gmail.com" className="btn-cta" style={{ textDecoration: "none" }}>
-            Contact Support &#8594;
-          </a>
-        </div>
       </section>
 
       {/* Footer */}
@@ -208,10 +215,9 @@ export default function SupportFaqs() {
               </Link>
             </div>
           </div>
-
           <div className="footer-meta">
             <span className="footer-badge">
-              <span className="status-dot"></span> Support Online
+              <span className="status-dot"></span> System Operational
             </span>
             <span className="footer-copy">© {new Date().getFullYear()} NeoCare. All rights reserved.</span>
           </div>

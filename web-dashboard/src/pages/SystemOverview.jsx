@@ -20,12 +20,12 @@ export default function SystemOverview() {
       <div className="hero-wrapper" style={{ paddingBottom: 40 }}>
         <section className="section" style={{ paddingTop: 48, paddingBottom: 32 }}>
           <div className="section-tag">System Overview</div>
-          <h1 className="hero-title" style={{ fontSize: 40, marginBottom: 16 }}>
+          <h1 className="hero-title" style={{ fontSize: 38, marginBottom: 16 }}>
             Platform Architecture &amp; <br />
             <span className="text-gradient">Role-Based Medical Control</span>
           </h1>
-          <p className="hero-body" style={{ maxWidth: 680 }}>
-            Comprehensive overview of NeoCare's multi-tenant clinical portals, vital telemetry thresholds, and emergency alarm subsystem.
+          <p className="hero-body" style={{ maxWidth: 640 }}>
+            Role-based clinical workflows, real-time vitals monitoring, and emergency alarm architecture engineered for critical neonatal care.
           </p>
 
           {/* Real-time System Statistics */}
@@ -52,62 +52,57 @@ export default function SystemOverview() {
 
       {/* Role-Based Medical Portals */}
       <section className="section">
-        <div className="section-tag">Dedicated Workspaces</div>
-        <h2 className="section-heading">Role-Based Medical Portals</h2>
+        <div className="section-tag">Workspaces</div>
+        <h2 className="section-heading">Role-Based Clinical Portals</h2>
         <p className="section-lead">
-          Designed for strict institutional security. Each role enters through their
-          dedicated portal with granular clinical access control.
+          Granular access control ensuring each hospital role enters their dedicated environment.
         </p>
 
         <div className="portals-grid">
           <div className="portal-card staff">
             <div className="portal-card-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
               </svg>
             </div>
             <h3>Doctors &amp; Nurses Portal</h3>
             <p>
-              Direct bedside telemetry access. Monitor real-time ECG and vitals,
-              acknowledge auditory and visual alarms, and record clinical shift notes.
+              Bedside telemetry monitor, real-time vital trends, audible alarm acknowledgement, and clinical shift note recording.
             </p>
             <Link to="/login" className="portal-card-link">
-              Sign In as Clinical Staff &#8594;
+              Clinical Sign In &#8594;
             </Link>
           </div>
 
           <div className="portal-card hospital">
             <div className="portal-card-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                 <polyline points="9 22 9 12 15 12 15 22"/>
               </svg>
             </div>
             <h3>Hospital Admin Console</h3>
             <p>
-              Hospital resource command. Provision neonatal wards, register and configure
-              incubators, verify staff credentials, and manage bed assignments.
+              Hospital resource command: provision neonatal wards, register incubators, verify staff licenses, and manage bed allocations.
             </p>
             <Link to="/login" className="portal-card-link">
-              Hospital Admin Console &#8594;
+              Hospital Console &#8594;
             </Link>
           </div>
 
           <div className="portal-card admin">
             <div className="portal-card-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07M8.46 8.46a5 5 0 0 0 0 7.07"/>
               </svg>
             </div>
             <h3>System Admin Platform</h3>
             <p>
-              Main platform governance. Review and approve incoming hospital tenant
-              registrations, audit system health, and oversee telemetry network infrastructure.
+              Platform governance: review incoming hospital tenant registrations, audit system health, and oversee telemetry infrastructure.
             </p>
-            <Link to="/login" className="portal-card-link">
-              Platform Administration &#8594;
+            <Link to="/admin/login" className="portal-card-link">
+              Platform Admin &#8594;
             </Link>
           </div>
         </div>
@@ -115,91 +110,59 @@ export default function SystemOverview() {
 
       {/* Built for Critical Care */}
       <section className="section" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="section-tag">Clinical Safety</div>
+        <div className="section-tag">Clinical Reliability</div>
         <h2 className="section-heading">Built for Critical Care</h2>
         <p className="section-lead">
-          Comprehensive features engineered to eliminate monitoring blind spots in neonatal ICUs.
+          Core capabilities engineered to eliminate monitoring blind spots in neonatal ICUs.
         </p>
 
-        <div className="feature-grid">
+        <div className="feature-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
           <div className="feature-card">
             <div className="feature-card-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
               </svg>
             </div>
-            <h3>Live Telemetry Stream</h3>
+            <h3>Real-Time Telemetry Stream</h3>
             <p>
-              High-frequency vitals update without page refreshes. Interactive SVG trend charts
-              reflect instant biological changes.
+              Sub-second vital streaming over WebSockets and MQTT with instant biological waveform rendering.
             </p>
           </div>
 
           <div className="feature-card">
             <div className="feature-card-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
               </svg>
             </div>
             <h3>Audible Emergency Chimes</h3>
             <p>
-              Browser-unlocked Web Audio API dual-tone alerts sound during Bradycardia,
-              Tachycardia, or Hypoxia emergencies until manually silenced.
+              Hardware-accelerated and browser-unlocked dual-tone alarms for Bradycardia, Tachycardia, and Hypoxia events.
             </p>
           </div>
 
           <div className="feature-card">
             <div className="feature-card-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
               </svg>
             </div>
             <h3>Digital Twin Incubator</h3>
             <p>
-              Real-time schematic representation of the neonatal patient within the incubator,
-              mapping sensory inputs to visual status indicators.
+              Interactive spatial representation of the neonatal incubator mapping sensory inputs directly to visual bedside indicators.
             </p>
           </div>
 
           <div className="feature-card">
             <div className="feature-card-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/>
-                <line x1="6" y1="20" x2="6" y2="14"/>
-              </svg>
-            </div>
-            <h3>Historical Analytics</h3>
-            <p>
-              Every sensory packet is securely stored in time-series database records for
-              clinical retrospective review and trend diagnosis.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-card-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
               </svg>
             </div>
-            <h3>Multi-Tenant Verification</h3>
+            <h3>Multi-Tenant Institutional Security</h3>
             <p>
-              Institutional hospital boundaries ensure staff only view patients inside their
-              assigned hospital and designated neonatal ward.
-            </p>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-card-icon">
-              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
-                <line x1="12" y1="18" x2="12.01" y2="18"/>
-              </svg>
-            </div>
-            <h3>Cross-Device Support</h3>
-            <p>
-              Fully responsive web workstation interface paired with a mobile caregiver app
-              for nurses on duty rounds.
+              Strict hospital and ward boundaries guarantee patient telemetry is isolated and viewable only by authorized medical teams.
             </p>
           </div>
         </div>

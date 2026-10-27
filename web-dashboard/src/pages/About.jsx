@@ -14,23 +14,21 @@ export default function About() {
 
   return (
     <div className="home-page-container">
-      {/* Public Header */}
       <PublicHeader />
 
       {/* Hero Section */}
       <div className="hero-wrapper" style={{ paddingBottom: 40 }}>
         <section className="section" style={{ paddingTop: 48, paddingBottom: 32 }}>
           <div className="section-tag">About NeoCare</div>
-          <h1 className="hero-title" style={{ fontSize: 40, marginBottom: 16 }}>
+          <h1 className="hero-title" style={{ fontSize: 38, marginBottom: 16 }}>
             Bridging the Critical Care Gap in <br />
             <span className="text-gradient">Neonatal Surveillance</span>
           </h1>
-          <p className="hero-body" style={{ maxWidth: 680 }}>
-            NeoCare is an open, low-cost biomedical IoT platform designed to bring continuous,
-            sub-second vital monitoring to neonatal intensive care units across all healthcare tiers.
+          <p className="hero-body" style={{ maxWidth: 640 }}>
+            NeoCare is an accessible biomedical IoT platform engineered to bring continuous, sub-second vital monitoring to neonatal intensive care units across all healthcare tiers.
           </p>
 
-          {/* Live Real-Time System Stats */}
+          {/* Live System Stats */}
           <div className="metrics-ribbon" style={{ background: "var(--panel)", borderRadius: "var(--radius-lg)", border: "1px solid var(--border)", padding: "20px 24px", marginTop: 28 }}>
             <div className="metric-item">
               <span className="metric-value">{stats.hospitals}</span>
@@ -45,19 +43,19 @@ export default function About() {
               <span className="metric-label">On-Duty Nurses</span>
             </div>
             <div className="metric-item">
-              <span className="metric-value">Real-Time</span>
-              <span className="metric-label">Live System Database</span>
+              <span className="metric-value">Active</span>
+              <span className="metric-label">Live Telemetry Feeds</span>
             </div>
           </div>
         </section>
       </div>
 
-      {/* The Problem Statement */}
+      {/* The Healthcare Challenge */}
       <section className="section">
-        <div className="section-tag">The Real-World Gap</div>
-        <h2 className="section-heading">The Healthcare Challenge</h2>
+        <div className="section-tag">The Healthcare Gap</div>
+        <h2 className="section-heading">The Clinical Challenge</h2>
         <p className="section-lead">
-          Every year, millions of newborns require critical physiological monitoring during their first fragile days of life.
+          Continuous physiological monitoring during an infant's first days is essential for early intervention.
         </p>
 
         <div className="feature-grid" style={{ gridTemplateColumns: "repeat(2, 1fr)" }}>
@@ -69,10 +67,9 @@ export default function About() {
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
             </div>
-            <h3>Understaffed & Rural NICUs</h3>
+            <h3>Understaffed &amp; Rural NICUs</h3>
             <p>
-              In many community and rural hospitals, a single nurse oversees multiple incubators simultaneously.
-              Without automated continuous telemetry, early signs of hypothermia, hypoxia, or bradycardia can easily go unnoticed between manual clinical rounds.
+              In many community and rural hospitals, a single nurse oversees multiple incubators. Without automated telemetry, subtle onset of hypoxia or bradycardia can go unnoticed between manual clinical rounds.
             </p>
           </div>
 
@@ -83,10 +80,9 @@ export default function About() {
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
               </svg>
             </div>
-            <h3>Exorbitant Equipment Costs</h3>
+            <h3>Equipment Cost Barriers</h3>
             <p>
-              Traditional commercial bedside telemetry monitors cost thousands of dollars per unit, making full-fleet
-              incubator monitoring financially impossible for under-resourced medical facilities in developing regions.
+              Traditional commercial bedside monitors cost thousands of dollars per unit, placing comprehensive incubator telemetry out of reach for resource-constrained centers.
             </p>
           </div>
         </div>
@@ -94,8 +90,8 @@ export default function About() {
 
       {/* Our Mission */}
       <section className="section" style={{ borderTop: "1px solid var(--border)" }}>
-        <div className="section-tag">Our Vision</div>
-        <h2 className="section-heading">Our Mission</h2>
+        <div className="section-tag">Our Approach</div>
+        <h2 className="section-heading">Our Core Innovations</h2>
         <p className="section-lead">
           Democratizing biomedical IoT innovation so no infant is left unmonitored.
         </p>
@@ -110,15 +106,11 @@ export default function About() {
                 <line x1="15" y1="1" x2="15" y2="4" />
                 <line x1="9" y1="20" x2="9" y2="23" />
                 <line x1="15" y1="20" x2="15" y2="23" />
-                <line x1="20" y1="9" x2="23" y2="9" />
-                <line x1="20" y1="14" x2="23" y2="14" />
-                <line x1="1" y1="9" x2="4" y2="9" />
-                <line x1="1" y1="14" x2="4" y2="14" />
               </svg>
             </div>
-            <h3>Low-Cost IoT Hardware</h3>
+            <h3>Accessible Hardware</h3>
             <p>
-              Leveraging accessible microcontrollers and medical-grade optical sensors to build reliable, affordable telemetry probes that transmit over lightweight MQTT brokers.
+              Medical-grade optical sensors and microcontrollers transmitting telemetry over secure, lightweight MQTT brokers.
             </p>
           </div>
 
@@ -130,7 +122,7 @@ export default function About() {
             </div>
             <h3>Sub-Second Alerting</h3>
             <p>
-              Evaluating vital parameters instantly against clinical thresholds (Heart Rate 100–180 bpm, SpO2 &gt;94%, Temp 36.0–37.8°C) to sound instant visual and auditory warnings.
+              Instant evaluation against vital thresholds (HR 100–180 bpm, SpO2 &gt;94%, Temp 36.0–37.8°C) with persistent audible chimes.
             </p>
           </div>
 
@@ -141,9 +133,9 @@ export default function About() {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
-            <h3>Multi-Tenant Institutional Security</h3>
+            <h3>Multi-Tenant Isolation</h3>
             <p>
-              Strict role-scoped data isolation ensuring hospital data remains private, verifiable by system administrators, and accessible only to authorized medical personnel.
+              Role-scoped database boundaries ensuring patient telemetry remains strictly private to authorized hospital teams.
             </p>
           </div>
         </div>
