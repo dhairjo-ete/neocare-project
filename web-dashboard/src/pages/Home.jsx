@@ -8,6 +8,9 @@ const TRACE_PATH =
 
 export const DIRECT_DOWNLOAD_URL =
   import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
+  "https://dl.dropboxusercontent.com/scl/fi/ssvxjoz8asd7pgiukkugd/NeoCare-Setup-1.0.0.exe?rlkey=va96oo683bwbhzesijn9cqgi9&st=m9aqs27c&dl=1";
+
+export const GITHUB_DOWNLOAD_MIRROR =
   "https://github.com/dhairjo-ete/neocare-project/releases/latest/download/NeoCare.Setup.1.0.0.exe";
 
 export default function Home() {
@@ -374,8 +377,16 @@ export default function Home() {
                     <polyline points="7 10 12 15 17 10" />
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
-                  <span>{downloadStarted ? "Download Again (.exe)" : "Download Installer (.exe)"}</span>
+                  <span>{downloadStarted ? "Download Again (Fast CDN)" : "Download Installer (.exe)"}</span>
                 </button>
+                <a
+                  href={GITHUB_DOWNLOAD_MIRROR}
+                  download="NeoCare.Setup.1.0.0.exe"
+                  style={{ textAlign: "center", fontSize: 12, color: "var(--text-tertiary)", textDecoration: "none", marginTop: 2 }}
+                  title="Alternative download mirror hosted on GitHub Releases"
+                >
+                  Alternative Mirror: GitHub Releases &#8599;
+                </a>
               </div>
             </div>
 
