@@ -177,12 +177,9 @@ export default function Home() {
             <div className="section-tag" style={{ background: "rgba(34, 197, 94, 0.12)", color: "var(--ok, #22c55e)" }}>
               Dedicated Desktop Workstation
             </div>
-            <h2 style={{ fontSize: 28, fontWeight: 800, margin: "10px 0 12px", color: "var(--text-primary)" }}>
+            <h2 style={{ fontSize: 28, fontWeight: 800, margin: "10px 0 18px", color: "var(--text-primary)" }}>
               NeoCare Software for Windows
             </h2>
-            <p style={{ color: "var(--text-secondary)", fontSize: 14, lineHeight: 1.6, margin: "0 0 20px" }}>
-              Tailored for dedicated NICU bedside monitors and nursing desks. Operates natively with louder hardware audio chimes, single-instance kiosk full-screen mode, and zero browser tab dropouts.
-            </p>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 14 }}>
               <button
                 type="button"
@@ -205,11 +202,7 @@ export default function Home() {
 
       {/* ---------- Platform Navigation Highlights ---------- */}
       <section className="section">
-        <div className="section-tag">Explore Platform</div>
-        <h2 className="section-heading">Learn More About NeoCare</h2>
-        <p className="section-lead">
-          Continuous neonatal surveillance engineered for critical clinical reliability.
-        </p>
+        <h2 className="section-heading" style={{ marginBottom: 24 }}>Learn More About NeoCare</h2>
 
         <div className="portals-grid">
           <div className="portal-card hospital">
