@@ -61,6 +61,9 @@ export default function Home() {
                 <span>Access Live Monitor</span>
                 <span>&#8594;</span>
               </Link>
+              <Link to="/signup" className="btn-cta-outline">
+                Register Hospital
+              </Link>
               <button
                 type="button"
                 className="btn-cta-download"
@@ -72,9 +75,6 @@ export default function Home() {
                 </svg>
                 <span>Download Desktop App</span>
               </button>
-              <Link to="/signup" className="btn-cta-outline">
-                Register Hospital
-              </Link>
             </div>
 
             <div className="hero-trust-bar">
