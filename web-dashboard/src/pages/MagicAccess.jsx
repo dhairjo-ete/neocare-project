@@ -5,12 +5,36 @@ import PublicHeader from "../components/PublicHeader";
 
 export default function MagicAccess() {
   const [searchParams] = useSearchParams();
-  const codeParam = searchParams.get("code") || searchParams.get("key") || "";
+  const rawCode = searchParams.get("code") || searchParams.get("key") || "";
+  const codeParam = rawCode.trim().replace(/\s+/g, "-").toUpperCase();
   const [manualCode, setManualCode] = useState(codeParam);
   const [loading, setLoading] = useState(Boolean(codeParam));
+  const [isSlow, setIsSlow] = useState(false);
   const [error, setError] = useState("");
   const { loginWithMagicCode } = useAuth();
   const navigate = useNavigate();
+
+  const authenticate = async (targetCode) => {
+    const code = targetCode || codeParam;
+    if (!code) return;
+    try {
+      setLoading(true);
+      setError("");
+      setIsSlow(false);
+      await loginWithMagicCode(code);
+      navigate("/patient/dashboard", { replace: true });
+    } catch (err) {
+      const msg = err?.response?.data?.error;
+      if (msg) {
+        setError(msg);
+      } else if (err.code === "ECONNABORTED" || err.message?.toLowerCase().includes("network")) {
+        setError("Clinical server was sleeping and may still be waking up. Please click 'Retry Access' below.");
+      } else {
+        setError("Invalid or expired magic link. Please check the SMS PIN sent to your phone or enter it below.");
+      }
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (!codeParam) {
@@ -19,46 +43,22 @@ export default function MagicAccess() {
     }
 
     let isMounted = true;
-    async function authenticate() {
-      try {
-        setLoading(true);
-        setError("");
-        await loginWithMagicCode(codeParam);
-        if (isMounted) {
-          navigate("/patient/dashboard", { replace: true });
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(
-            err?.response?.data?.error ||
-              "Invalid or expired magic link. Please enter your patient access code below."
-          );
-          setLoading(false);
-        }
-      }
-    }
+    const timer = setTimeout(() => {
+      if (isMounted) setIsSlow(true);
+    }, 4500);
 
-    authenticate();
+    authenticate(codeParam);
+
     return () => {
       isMounted = false;
+      clearTimeout(timer);
     };
-  }, [codeParam, loginWithMagicCode, navigate]);
+  }, [codeParam]);
 
   async function handleManualSubmit(e) {
     e.preventDefault();
     if (!manualCode.trim()) return;
-    try {
-      setLoading(true);
-      setError("");
-      await loginWithMagicCode(manualCode.trim());
-      navigate("/patient/dashboard", { replace: true });
-    } catch (err) {
-      setError(
-        err?.response?.data?.error ||
-          "Invalid access code. Please verify the code sent to your phone upon admission."
-      );
-      setLoading(false);
-    }
+    await authenticate(manualCode.trim());
   }
 
   return (
@@ -73,8 +73,14 @@ export default function MagicAccess() {
               <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>
                 Verifying One-Click Magic Link...
               </div>
-              <p style={{ color: "var(--text-secondary)", fontSize: 13, margin: 0 }}>
-                Connecting to secure patient telemetry records...
+              <p style={{ color: "var(--text-secondary)", fontSize: 13, margin: 0, lineHeight: 1.5 }}>
+                {isSlow ? (
+                  <span style={{ color: "var(--brand, #0f4c81)", fontWeight: 600 }}>
+                    Telemetry cloud server is waking up from idle mode (takes ~25-35s on free tier). Please stay on this page...
+                  </span>
+                ) : (
+                  "Connecting to secure patient telemetry records..."
+                )}
               </p>
             </div>
           ) : (
@@ -114,6 +120,17 @@ export default function MagicAccess() {
               </p>
 
               {error && <div className="error-text" style={{ marginBottom: 16 }}>{error}</div>}
+
+              {error && codeParam && (
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => authenticate(codeParam)}
+                  style={{ width: "100%", marginBottom: 16, background: "var(--brand, #0f4c81)" }}
+                >
+                  Retry One-Click Link ({codeParam})
+                </button>
+              )}
 
               <form onSubmit={handleManualSubmit} style={{ textAlign: "left" }}>
                 <div className="field">

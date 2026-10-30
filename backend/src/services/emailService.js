@@ -5,8 +5,18 @@ function generateVerificationToken() {
   return crypto.randomBytes(32).toString("hex");
 }
 
+function getFrontendUrl() {
+  if (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes("localhost")) {
+    return process.env.FRONTEND_URL.trim().replace(/\/+$/, "");
+  }
+  if (process.env.NODE_ENV === "production") {
+    return "https://neocaretelemetry.netlify.app";
+  }
+  return (process.env.FRONTEND_URL || "http://localhost:5173").trim().replace(/\/+$/, "");
+}
+
 async function sendVerificationEmail({ toEmail, recipientName, role, hospitalName, token }) {
-  const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+  const frontendUrl = getFrontendUrl();
   const verifyUrl = `${frontendUrl}/verify-email?token=${token}`;
 
   console.log("\n=======================================================");
@@ -119,7 +129,7 @@ async function sendVerificationEmail({ toEmail, recipientName, role, hospitalNam
 }
 
 async function sendStaffWelcomeEmail({ toEmail, recipientName, role, hospitalName, temporaryPassword }) {
-  const frontendUrl = (process.env.FRONTEND_URL || "http://localhost:5173").trim();
+  const frontendUrl = getFrontendUrl();
   const loginUrl = `${frontendUrl}/login`;
   const roleLabel = role === "doctor" ? "Attending Physician / Doctor" : "Clinical Duty Nurse";
 

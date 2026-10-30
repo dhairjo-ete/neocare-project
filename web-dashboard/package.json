@@ -9,9 +9,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "electron:start": "electron .",
-    "electron:pack": "vite build && electron-builder --dir",
-    "electron:build": "vite build && electron-builder --win",
-    "electron:dist": "vite build && electron-builder -mwl"
+    "electron:pack": "vite build --base ./ && electron-builder --dir",
+    "electron:build": "vite build --base ./ && electron-builder --win",
+    "electron:dist": "vite build --base ./ && electron-builder -mwl"
   },
   "dependencies": {
     "axios": "^1.7.2",

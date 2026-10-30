@@ -173,7 +173,12 @@ async function createPatient(req, res) {
   });
 
   // Construct One-Click Magic Link
-  const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const reqOrigin = req.headers.origin || (req.headers.referer ? (() => { try { return new URL(req.headers.referer).origin; } catch { return null; } })() : null);
+  const baseUrl = (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes("localhost"))
+    ? process.env.FRONTEND_URL.replace(/\/+$/, "")
+    : (reqOrigin && !reqOrigin.includes("localhost")
+        ? reqOrigin
+        : (process.env.NODE_ENV === "production" ? "https://neocaretelemetry.netlify.app" : (process.env.FRONTEND_URL || "http://localhost:5173")));
   const magicLink = `${baseUrl}/patient/access?code=${accessCode}`;
 
   // Fetch hospital name for notification

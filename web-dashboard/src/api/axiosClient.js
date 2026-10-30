@@ -41,9 +41,17 @@ axiosClient.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem("neocare_token");
       localStorage.removeItem("neocare_user");
-      // Only redirect if not already on login/signup page
+      // Only redirect if not already on login/signup or patient access portal
       const current = (window.location.pathname + window.location.hash).toLowerCase();
-      if (!current.includes("login") && !current.includes("signup")) {
+      const isExemptRoute =
+        current.includes("login") ||
+        current.includes("signup") ||
+        current.includes("patient") ||
+        current.includes("magic") ||
+        current.includes("access") ||
+        current.includes("verify-email");
+
+      if (!isExemptRoute) {
         if (window.location.protocol === "file:") {
           window.location.hash = "#/login";
         } else {

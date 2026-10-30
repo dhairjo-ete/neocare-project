@@ -678,7 +678,7 @@ async function magicAccess(req, res) {
       return res.status(400).json({ error: "Access code is required" });
     }
 
-    const cleanCode = code.trim().toUpperCase();
+    const cleanCode = code.trim().replace(/\s+/g, "-").toUpperCase();
     const Patient = require("../models/Patient");
     const patient = await Patient.findOne({
       accessCode: cleanCode,

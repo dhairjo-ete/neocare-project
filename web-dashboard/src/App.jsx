@@ -1,4 +1,5 @@
-import { BrowserRouter, HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { isElectron } from "./utils/isElectron";
@@ -91,6 +92,20 @@ function AppRoutes() {
 
 import ErrorBoundary from "./components/ErrorBoundary";
 
+function PathNormalizer() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (location.pathname && location.pathname.includes("//")) {
+      const cleanPath = location.pathname.replace(/\/+/g, "/");
+      navigate(cleanPath + location.search + location.hash, { replace: true });
+    }
+  }, [location, navigate]);
+
+  return null;
+}
+
 const Router = isElectron ? HashRouter : BrowserRouter;
 
 export default function App() {
@@ -99,6 +114,7 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <Router>
+            <PathNormalizer />
             <AppRoutes />
           </Router>
         </AuthProvider>
