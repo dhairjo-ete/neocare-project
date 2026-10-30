@@ -85,7 +85,7 @@ export default function PublicHeader() {
         {/* On public website, show quick Download Desktop App button */}
         {!isElectron && (
           <a
-            href="https://dl.dropboxusercontent.com/scl/fi/ssvxjoz8asd7pgiukkugd/NeoCare-Setup-1.0.0.exe?rlkey=va96oo683bwbhzesijn9cqgi9&st=m9aqs27c&dl=1"
+            href="https://dl.dropboxusercontent.com/scl/fi/ssvxjoz8asd7pgiukkugd/NeoCare-Setup-1.0.0.exe?rlkey=va96oo683bwbhzesijn9cqgi9&st=y1hth2wn&dl=1"
             download="NeoCare.Setup.1.0.0.exe"
             className="btn-header-download"
             title="Download NeoCare Desktop App (.exe for Windows)"

@@ -8,7 +8,7 @@ const TRACE_PATH =
 
 export const DIRECT_DOWNLOAD_URL =
   import.meta.env.VITE_DESKTOP_DOWNLOAD_URL ||
-  "https://dl.dropboxusercontent.com/scl/fi/ssvxjoz8asd7pgiukkugd/NeoCare-Setup-1.0.0.exe?rlkey=va96oo683bwbhzesijn9cqgi9&st=m9aqs27c&dl=1";
+  "https://dl.dropboxusercontent.com/scl/fi/ssvxjoz8asd7pgiukkugd/NeoCare-Setup-1.0.0.exe?rlkey=va96oo683bwbhzesijn9cqgi9&st=y1hth2wn&dl=1";
 
 export const GITHUB_DOWNLOAD_MIRROR =
   "https://github.com/dhairjo-ete/neocare-project/releases/latest/download/NeoCare.Setup.1.0.0.exe";
