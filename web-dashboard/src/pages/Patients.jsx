@@ -6,7 +6,7 @@ import { useDataSync } from "../hooks/useDataSync";
 import { useAuth } from "../context/AuthContext";
 import CustomSelect from "../components/ui/CustomSelect";
 import InfoTooltip from "../components/ui/InfoTooltip";
-import { formatGuardianCareUpdate, formatDoctorName } from "../utils/clinicalCommunication";
+import { formatGuardianCareUpdate, formatDoctorName, getPublicWebOrigin } from "../utils/clinicalCommunication";
 
 const BLOOD_TYPES = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "unknown"];
 
@@ -574,8 +574,8 @@ export default function Patients() {
       {admittedSuccessData && (() => {
         const incMatch = incubators.find((i) => String(i._id) === String(admittedSuccessData.incubatorId?._id || admittedSuccessData.incubatorId));
         const bedLabel = incMatch?.label || incMatch?.deviceTopicId || admittedSuccessData.incubatorId?.label || "NICU Bed";
-        const currentOrigin = typeof window !== "undefined" ? window.location.origin : "";
-        const effectiveMagicLink = admittedSuccessData.magicLink && !admittedSuccessData.magicLink.includes("localhost")
+        const currentOrigin = getPublicWebOrigin();
+        const effectiveMagicLink = admittedSuccessData.magicLink && !admittedSuccessData.magicLink.includes("localhost") && !admittedSuccessData.magicLink.includes("file:")
           ? admittedSuccessData.magicLink
           : `${currentOrigin}/patient/access?code=${admittedSuccessData.accessCode}`;
         const cleanPhone = (admittedSuccessData.guardianPhone || "").replace(/[^0-9]/g, "");

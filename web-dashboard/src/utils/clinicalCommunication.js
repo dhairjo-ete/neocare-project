@@ -30,6 +30,24 @@ export function formatDoctorName(name) {
 }
 
 /**
+ * Returns the canonical public domain for clinical portals,
+ * ensuring desktop clients (file://) and localhost use the live public URL.
+ */
+export function getPublicWebOrigin() {
+  if (typeof window !== "undefined") {
+    const isFileOrDesktop =
+      window.location.protocol === "file:" ||
+      Boolean(window.electron) ||
+      navigator.userAgent.toLowerCase().includes("electron");
+
+    if (!isFileOrDesktop && window.location.origin && !window.location.origin.includes("localhost") && !window.location.origin.includes("file:")) {
+      return window.location.origin.replace(/\/+$/, "");
+    }
+  }
+  return "https://neocaretelemetry.netlify.app";
+}
+
+/**
  * Formats a courteous, professional clinical advisory for attending physicians.
  *
  * @param {Object} params
@@ -83,7 +101,7 @@ export function formatDoctorClinicalAdvisory(params = {}) {
       ? "An ongoing parameter variance has elapsed without acknowledgement. A bedside assessment or nursing consultation is requested at your earliest convenience."
       : "A bedside evaluation or telemetry chart review is recommended at your earliest clinical convenience.";
 
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const origin = getPublicWebOrigin();
     const bedUrl = deviceId ? `${origin}/dashboard?device=${deviceId}` : `${origin}/dashboard`;
 
     return (
@@ -150,7 +168,7 @@ export function formatNurseClinicalAdvisory(params = {}) {
       ? "An ongoing parameter variance has elapsed without acknowledgement. Immediate bedside verification of sensor placement, airway, and vitals is requested."
       : "Immediate bedside verification of infant comfort, sensor placement, and physiological status is requested.";
 
-    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const origin = getPublicWebOrigin();
     const bedUrl = deviceId ? `${origin}/dashboard?device=${deviceId}` : `${origin}/dashboard`;
 
     return (
@@ -191,8 +209,11 @@ export function formatGuardianCareUpdate({
   magicLink = "",
 }) {
   const greeting = guardianName ? `Dear ${guardianName},` : "Dear Parent / Guardian,";
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const portalUrl = magicLink || (accessCode ? `${origin}/patient/access?code=${accessCode}` : `${origin}/patient/access`);
+  const origin = getPublicWebOrigin();
+  const cleanMagicLink = magicLink && !magicLink.includes("file:") && !magicLink.includes("localhost")
+    ? magicLink.replace(/\/+$/, "")
+    : null;
+  const portalUrl = cleanMagicLink || (accessCode ? `${origin}/patient/access?code=${accessCode}` : `${origin}/patient/access`);
 
   return (
     `🌸 NeoCare Neonatal Care • Family Portal\n\n` +
