@@ -47,6 +47,13 @@ function RequireRole({ roles, children }) {
 }
 
 function AppRoutes() {
+  const location = useLocation();
+
+  if (location.pathname && (location.pathname.includes("//") || (location.pathname.length > 1 && location.pathname.endsWith("/")))) {
+    const cleanPath = location.pathname.replace(/\/+/g, "/").replace(/\/+$/, "") || "/";
+    return <Navigate to={cleanPath + location.search + location.hash} replace />;
+  }
+
   return (
     <Routes>
       {/* In Electron desktop software, start directly at login (no home/overview) */}
@@ -60,6 +67,7 @@ function AppRoutes() {
 
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/patient/access" element={<MagicAccess />} />
+      <Route path="/patient/access/*" element={<MagicAccess />} />
       <Route path="/patient/dashboard" element={<PrivateRoute><PatientDashboard /></PrivateRoute>} />
 
       <Route path="/dashboard" element={<StaffRoute><Dashboard /></StaffRoute>} />
