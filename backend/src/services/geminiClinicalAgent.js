@@ -10,7 +10,9 @@
 const { GoogleGenAI } = require("@google/genai");
 
 // Primary model identifier: gemini-3.6-flash with environmental override capability
-const DEFAULT_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+const FALLBACK_MODELS = ["gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.8-flash"];
+
 const PUBLIC_PORTAL_BASE = (process.env.FRONTEND_URL && !process.env.FRONTEND_URL.includes("localhost"))
   ? process.env.FRONTEND_URL.replace(/\/+$/, "")
   : "https://neocaretelemetry.netlify.app";
@@ -40,15 +42,21 @@ function generateDeterministicAdvisory({
   const bedUrl = `${PUBLIC_PORTAL_BASE}/dashboard?device=${encodeURIComponent(deviceId || "")}`;
 
   let clinicalImpression = `Acute parameter deviation noted for ${paramLabel} (${value}). Clinical bedside assessment indicated.`;
-  let suggestedOrders = [
+  let doctorOrders = [
     "Bedside physical auscultation and vital signs re-verification",
     "Continuous cardiorespiratory monitor inspection",
     "Verify incubator environmental setpoint and thermal balance",
   ];
+  let nurseChecklist = [
+    "Inspect physical sensor probe placement & skin contact.",
+    "Verify airway patency, head alignment, and breathing effort.",
+    "Inspect incubator thermal canopy and monitor continuous waveform.",
+    "Notify attending physician if parameter fails to stabilize promptly.",
+  ];
 
   if (type === "spo2") {
     clinicalImpression = `Acute hypoxemia: SpO2 dropped to ${value}% in infant with ${syndrome} (GA: ${ga}, BW: ${bw}).`;
-    suggestedOrders = [
+    doctorOrders = [
       "Immediate airway clearance and gentle suctioning of secretions",
       "Verify pulse oximeter probe alignment and plethysmograph waveform",
       "Assess CPAP prong seal, PEEP pressure, and consider FiO2 titration",
@@ -56,7 +64,7 @@ function generateDeterministicAdvisory({
     ];
   } else if (type === "heart_rate" && value < 100) {
     clinicalImpression = `Bradycardia: Heart rate dropped to ${value} bpm in infant with ${syndrome}.`;
-    suggestedOrders = [
+    doctorOrders = [
       "Tactile stimulation and airway patency verification",
       "Check 3-lead ECG electrode adherence and skin contact",
       "Assess for vagal response, apnea of prematurity, or hypoxemia",
@@ -64,14 +72,14 @@ function generateDeterministicAdvisory({
     ];
   } else if (type === "heart_rate" && value > 180) {
     clinicalImpression = `Tachycardia: Heart rate elevated to ${value} bpm in infant with ${syndrome}.`;
-    suggestedOrders = [
+    doctorOrders = [
       "Evaluate infant comfort, pain, or thermal agitation in incubator",
       "Verify core temperature to rule out febrile state or incubator overheating",
       "Inspect hydration status and assess for supraventricular tachycardia",
     ];
   } else if (type === "temperature") {
     clinicalImpression = `Thermal dysregulation: Core temperature recorded at ${value}°C in incubator ${incubatorLabel}.`;
-    suggestedOrders = [
+    doctorOrders = [
       "Verify incubator air temperature and skin sensor probe adherence",
       "Check incubator canopy closure and air draft around infant",
       "Monitor for cold stress or hyperthermia and adjust servocontrol mode",
@@ -85,7 +93,7 @@ function generateDeterministicAdvisory({
     `• *Background*: Infant *${patientName}* (GA: ${ga}, BW: ${bw}) admitted with ${syndrome}.\n` +
     `• *Assessment*: ${clinicalImpression}\n` +
     `• *Proposed Orders*:\n` +
-    suggestedOrders.slice(0, 3).map((o, i) => `  ${i + 1}. ${o}`).join("\n") + "\n\n" +
+    doctorOrders.slice(0, 3).map((o, i) => `  ${i + 1}. ${o}`).join("\n") + "\n\n" +
     `🔗 *Live Bed Telemetry*: ${bedUrl}\n\n` +
     `NeoCare Clinical AI Decision Support`;
 
@@ -94,10 +102,7 @@ function generateDeterministicAdvisory({
     `Dear ${formattedNurse},\n\n` +
     `Bedside alert regarding *${patientName}* in *${incubatorLabel}* (${paramLabel}: ${value}):\n\n` +
     `*Immediate Action Checklist*:\n` +
-    `1. Inspect physical sensor probe placement & skin contact.\n` +
-    `2. Verify airway patency, head alignment, and infant breathing effort.\n` +
-    `3. Inspect incubator thermal canopy and monitor continuous waveform.\n` +
-    `4. Notify attending physician if parameter fails to stabilize within 60s.\n\n` +
+    nurseChecklist.map((c, i) => `${i + 1}. ${c}`).join("\n") + "\n\n" +
     `🔗 *Bedside View*: ${bedUrl}\n\n` +
     `NeoCare Clinical AI Decision Support`;
 
@@ -108,23 +113,16 @@ function generateDeterministicAdvisory({
     clinicalImpression,
     doctorAdvisory,
     nurseAdvisory,
-    suggestedOrders,
+    suggestedOrders: doctorOrders,
     model: "NeoCare-Clinical-Deterministic-Engine",
   };
 }
 
 /**
  * Evaluates a critical vital alarm using Gemini 3.6 Flash.
+ * Uses a resilient model cascade and strict timeout protection.
  *
  * @param {Object} context
- * @param {Object} context.patient
- * @param {Object} context.incubator
- * @param {Object} context.doctor
- * @param {Object} context.dutyNurse
- * @param {Object} context.reading
- * @param {string} context.type "spo2" | "heart_rate" | "temperature"
- * @param {number} context.value
- * @param {Object} context.result { severity, condition }
  * @returns {Promise<{ isCritical: boolean, isArtifact: boolean, confidence: number, clinicalImpression: string, doctorAdvisory: string, nurseAdvisory: string, suggestedOrders: string[], model: string }>}
  */
 async function evaluateCriticalAlertWithGemini(context) {
@@ -160,107 +158,130 @@ async function evaluateCriticalAlertWithGemini(context) {
     });
   }
 
-  try {
-    const ai = new GoogleGenAI({ apiKey });
-    const modelToUse = DEFAULT_MODEL;
+  const patientName = patient?.name || "Admitted Infant";
+  const syndrome = patient?.primarySyndrome || "Neonatal Surveillance";
+  const ga = patient?.gestationalAge ? `${patient.gestationalAge} weeks` : "Preterm";
+  const bw = patient?.birthWeight ? `${patient.birthWeight} kg` : "N/A";
+  const bedUrl = `${PUBLIC_PORTAL_BASE}/dashboard?device=${encodeURIComponent(deviceId)}`;
+  const formattedDoc = doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`;
+  const formattedNurse = nurseName.startsWith("Nurse") ? nurseName : `Nurse ${nurseName}`;
+  const paramLabel = String(type || "vital").replace(/_/g, " ").toUpperCase();
 
-    const patientName = patient?.name || "Admitted Infant";
-    const syndrome = patient?.primarySyndrome || "Neonatal Surveillance";
-    const ga = patient?.gestationalAge ? `${patient.gestationalAge} weeks` : "Preterm";
-    const bw = patient?.birthWeight ? `${patient.birthWeight} kg` : "N/A";
-    const bedUrl = `${PUBLIC_PORTAL_BASE}/dashboard?device=${encodeURIComponent(deviceId)}`;
-    const formattedDoc = doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`;
-    const formattedNurse = nurseName.startsWith("Nurse") ? nurseName : `Nurse ${nurseName}`;
+  const prompt = `You are the NeoCare Autonomous Clinical Decision Support Agent, specialized in Neonatal Intensive Care Unit (NICU) surveillance.
 
-    const prompt = `You are the NeoCare Autonomous Clinical Decision Support Agent, specialized in Neonatal Intensive Care Unit (NICU) surveillance.
-
-Analyze this critical vital signs alarm and formulate professional, role-specific WhatsApp notifications for the medical team.
-
-PATIENT CLINICAL CONTEXT:
+Analyze this critical vital signs alarm:
 - Patient Name: ${patientName}
 - Gestational Age: ${ga}
 - Birth Weight: ${bw}
-- Primary Pathology / Admitting Diagnosis: ${syndrome}
+- Primary Pathology / Diagnosis: ${syndrome}
 - Bed / Incubator: ${incubatorLabel} (ID: ${deviceId})
-- Attending Physician: ${formattedDoc}
-- Bedside Duty Nurse: ${formattedNurse}
-
-VITAL SIGNS VARIANCE:
-- Triggering Parameter: ${type}
-- Recorded Value: ${value}
-- Condition: ${result.condition || "Acute Variance"}
-- Incubator Chamber Temp: ${reading.temperature || "Normal"} °C
-- Chamber Humidity: ${reading.humidity || "Normal"} %
-- Timestamp: ${new Date().toISOString()}
-- Telemetry Portal URL: ${bedUrl}
+- Triggering Parameter: ${type} (${value})
+- Alarm Condition: ${result.condition || "Acute Variance"}
+- Chamber Temp: ${reading.temperature || "Normal"} °C, Humidity: ${reading.humidity || "Normal"} %
 
 TASKS:
-1. Assess whether this vital variance is clinically consistent with genuine decompensation vs motion artifact.
-2. Formulate a complete, professional doctorAdvisory using standard SBAR protocol (Situation, Background, Assessment, Recommendation) with suggested physician orders and the telemetry link.
-3. Formulate a complete, actionable nurseAdvisory with a numbered immediate physical bedside checklist and the telemetry link.
-4. List 3 to 4 specific clinical orders.
+1. Determine if this variance is clinically consistent with genuine decompensation (isArtifact: false) vs sensor noise (isArtifact: true).
+2. Synthesize a concise 1-2 sentence clinical impression.
+3. Formulate 3-4 specific doctor orders.
+4. Formulate 3-4 specific immediate bedside nurse actions.
 
-OUTPUT FORMAT REQUIREMENTS:
-Return strictly a valid JSON object with no markdown fences, no explanatory preambles.
-Format:
+Return strictly a valid JSON object matching:
 {
   "isCritical": true,
   "isArtifact": false,
   "confidence": 0.95,
-  "clinicalImpression": "1-2 sentence medical assessment",
-  "doctorAdvisory": "Full ready-to-send WhatsApp advisory for ${formattedDoc}",
-  "nurseAdvisory": "Full ready-to-send WhatsApp checklist for ${formattedNurse}",
-  "suggestedOrders": ["order 1", "order 2", "order 3"]
+  "impression": "1-2 sentence medical assessment",
+  "doctorOrders": ["order 1", "order 2", "order 3"],
+  "nurseChecklist": ["action 1", "action 2", "action 3"]
 }`;
 
-    // Execute with a strict 4.5-second timeout to protect NICU latency guarantees
-    const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Gemini API call timed out after 4500ms")), 4500)
-    );
+  const ai = new GoogleGenAI({ apiKey });
+  const modelsToTry = [PRIMARY_MODEL, ...FALLBACK_MODELS.filter((m) => m !== PRIMARY_MODEL)];
 
-    const apiPromise = ai.models.generateContent({
-      model: modelToUse,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        temperature: 0.1,
-      },
-    });
+  for (const modelToUse of modelsToTry) {
+    try {
+      // Execute with a strict 7.5-second timeout to protect NICU latency guarantees
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Gemini ${modelToUse} call timed out after 7500ms`)), 7500)
+      );
 
-    const response = await Promise.race([apiPromise, timeoutPromise]);
-    const rawText = response.text ? response.text.trim() : "";
-    const cleanJson = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
-    const parsed = JSON.parse(cleanJson);
+      const apiPromise = ai.models.generateContent({
+        model: modelToUse,
+        contents: prompt,
+        config: {
+          responseMimeType: "application/json",
+          temperature: 0.1,
+        },
+      });
 
-    return {
-      isCritical: Boolean(parsed.isCritical ?? true),
-      isArtifact: Boolean(parsed.isArtifact ?? false),
-      confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.95,
-      clinicalImpression: parsed.clinicalImpression || `${result.condition}: ${type} at ${value}`,
-      doctorAdvisory: parsed.doctorAdvisory || generateDeterministicAdvisory({ patient, incubatorLabel, deviceId, type, value, condition: result.condition, doctorName, nurseName }).doctorAdvisory,
-      nurseAdvisory: parsed.nurseAdvisory || generateDeterministicAdvisory({ patient, incubatorLabel, deviceId, type, value, condition: result.condition, doctorName, nurseName }).nurseAdvisory,
-      suggestedOrders: Array.isArray(parsed.suggestedOrders) ? parsed.suggestedOrders : [],
-      model: modelToUse,
-    };
-  } catch (err) {
-    console.error(`[geminiClinicalAgent] Fallback activated due to: ${err.message}`);
-    const fallback = generateDeterministicAdvisory({
-      patient,
-      incubatorLabel,
-      deviceId,
-      type,
-      value,
-      condition: result.condition || "Vital parameter variance",
-      doctorName,
-      nurseName,
-    });
-    fallback.error = err.message;
-    return fallback;
+      const response = await Promise.race([apiPromise, timeoutPromise]);
+      const rawText = response.text ? response.text.trim() : "";
+      const cleanJson = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      const parsed = JSON.parse(cleanJson);
+
+      const clinicalImpression = parsed.impression || `${result.condition}: ${paramLabel} at ${value}`;
+      const doctorOrders = Array.isArray(parsed.doctorOrders) && parsed.doctorOrders.length > 0
+        ? parsed.doctorOrders
+        : ["Bedside physical auscultation", "Verify pulse oximeter probe alignment", "Titrate supplemental oxygen"];
+      const nurseChecklist = Array.isArray(parsed.nurseChecklist) && parsed.nurseChecklist.length > 0
+        ? parsed.nurseChecklist
+        : ["Inspect physical sensor probe placement & skin contact", "Verify airway patency", "Inspect incubator canopy"];
+
+      const doctorAdvisory =
+        `🩺 *NEOCARE AI CLINICAL ADVISORY • HIGH PRIORITY*\n\n` +
+        `Dear ${formattedDoc},\n\n` +
+        `• *Situation*: ${result.condition || "Vital Variance"} (${paramLabel}: ${value}) in ${incubatorLabel}.\n` +
+        `• *Background*: Infant *${patientName}* (GA: ${ga}, BW: ${bw}) admitted with ${syndrome}.\n` +
+        `• *AI Assessment (${modelToUse})*: ${clinicalImpression}\n` +
+        `• *Proposed Orders*:\n` +
+        doctorOrders.slice(0, 4).map((o, i) => `  ${i + 1}. ${o}`).join("\n") + "\n\n" +
+        `🔗 *Live Bed Telemetry*: ${bedUrl}\n\n` +
+        `NeoCare Autonomous Clinical AI`;
+
+      const nurseAdvisory =
+        `🩺 *NEOCARE BEDSIDE ADVISORY • URGENT NURSING ACTION*\n\n` +
+        `Dear ${formattedNurse},\n\n` +
+        `Bedside alarm for *${patientName}* in *${incubatorLabel}* (${paramLabel}: ${value}):\n\n` +
+        `*Immediate Action Checklist*:\n` +
+        nurseChecklist.slice(0, 4).map((c, i) => `${i + 1}. ${c}`).join("\n") + "\n\n`" +
+        `🔗 *Bedside Telemetry*: ${bedUrl}\n\n` +
+        `NeoCare Autonomous Clinical AI`;
+
+      console.log(`[geminiClinicalAgent] ✅ Successfully generated clinical advisory via ${modelToUse} (confidence: ${parsed.confidence || 0.95})`);
+
+      return {
+        isCritical: Boolean(parsed.isCritical ?? true),
+        isArtifact: Boolean(parsed.isArtifact ?? false),
+        confidence: typeof parsed.confidence === "number" ? parsed.confidence : 0.95,
+        clinicalImpression,
+        doctorAdvisory,
+        nurseAdvisory,
+        suggestedOrders: doctorOrders,
+        model: modelToUse,
+      };
+    } catch (modelErr) {
+      console.warn(`[geminiClinicalAgent] Model ${modelToUse} attempt error: ${modelErr.message.slice(0, 120)}`);
+      // Try next model in candidate cascade
+    }
   }
+
+  // If all model calls encounter error/timeout, invoke deterministic clinical fallback
+  console.error(`[geminiClinicalAgent] All Gemini model attempts failed; activating deterministic NICU fallback.`);
+  const fallback = generateDeterministicAdvisory({
+    patient,
+    incubatorLabel,
+    deviceId,
+    type,
+    value,
+    condition: result.condition || "Vital parameter variance",
+    doctorName,
+    nurseName,
+  });
+  return fallback;
 }
 
 module.exports = {
   evaluateCriticalAlertWithGemini,
   generateDeterministicAdvisory,
-  DEFAULT_MODEL,
+  PRIMARY_MODEL,
 };
