@@ -86,6 +86,31 @@ async function sendWhatsAppMessage({ phone, message, role = "clinician" }) {
     }
   }
 
+  // 3. Green API Gateway (https://green-api.com - Free Developer Instance)
+  if (process.env.GREEN_API_ID_INSTANCE && process.env.GREEN_API_API_TOKEN_INSTANCE) {
+    try {
+      const host = process.env.GREEN_API_HOST || "https://api.green-api.com";
+      const url = `${host}/waInstance${process.env.GREEN_API_ID_INSTANCE}/sendMessage/${process.env.GREEN_API_API_TOKEN_INSTANCE}`;
+      const chatId = `${cleanPhone.replace("+", "")}@c.us`;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chatId: chatId,
+          message: message,
+        }),
+      });
+      const data = await response.json();
+      if (data.idMessage) {
+        return { success: true, provider: "GreenAPI", messageId: data.idMessage };
+      }
+      return { success: false, provider: "GreenAPI", error: JSON.stringify(data) };
+    } catch (err) {
+      return { success: false, provider: "GreenAPI", error: err.message };
+    }
+  }
+
 
   // 3. CallMeBot Free Testing API (https://www.callmebot.com)
   if (process.env.CALLMEBOT_API_KEY) {
