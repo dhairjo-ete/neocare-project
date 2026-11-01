@@ -6,6 +6,7 @@ const User = require("../models/User");
 const { sendPushAlert } = require("./fcm");
 const { emitNotification, emitDataChange } = require("../sockets/socket");
 const { notifyClinicalTeamSimultaneously } = require("./whatsappService");
+const { evaluateCriticalAlertWithGemini } = require("./geminiClinicalAgent");
 
 // Require 2 consecutive abnormal readings before firing an alert (debouncing)
 const DEBOUNCE_COUNT = 2;
@@ -206,39 +207,50 @@ async function checkThresholds(reading, io) {
         // 4. Send Mobile Push (FCM)
         await sendPushAlert(alert);
 
-        // 5. Tier 3: Automated WhatsApp / SMS Alert Dispatch for Critical Alarms (Doctor AND Nurse)
+        // 5. Tier 3: Automated WhatsApp / SMS Alert Dispatch via Gemini 3.6 Flash
         if (result.severity === "critical") {
-          const formattedDoc = doctorName ? (doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`) : "Attending Physician";
-          const docWhatsappText = `🩺 *NEOCARE CLINICAL ADVISORY • NEONATAL CARE*\n\n` +
-            `Dear ${formattedDoc},\n\n` +
-            `This is an automated advisory regarding your admitted patient:\n\n` +
-            `• Patient: *${patientName}*\n` +
-            `• Bed Location: *${incubatorLabel}*\n` +
-            `• Observation: *${result.condition}*\n` +
-            `• Recorded Value: *${type.replace(/_/g, " ").toUpperCase()}: ${value}*\n` +
-            `• Timestamp: ${new Date().toLocaleTimeString()}\n\n` +
-            `A bedside evaluation or telemetry chart review is recommended at your earliest clinical convenience.\n\n` +
-            `NeoCare Clinical Monitoring Services`;
+          let docWhatsappText = "";
+          let nurseWhatsappText = "";
 
-          const nurseWhatsappText = `🩺 *NEOCARE BEDSIDE ADVISORY • NURSING STATION*\n\n` +
-            `Dear Nurse ${nurseName},\n\n` +
-            `This is an automated advisory regarding patient in *${incubatorLabel}*:\n\n` +
-            `• Patient: *${patientName}*\n` +
-            `• Bed Location: *${incubatorLabel}*\n` +
-            `• Observation: *${result.condition}*\n` +
-            `• Recorded Value: *${type.replace(/_/g, " ").toUpperCase()}: ${value}*\n` +
-            `• Timestamp: ${new Date().toLocaleTimeString()}\n\n` +
-            `Immediate bedside assessment of infant comfort, sensor placement, and vitals is requested.\n\n` +
-            `NeoCare Clinical Monitoring Services`;
+          try {
+            const aiEvaluation = await evaluateCriticalAlertWithGemini({
+              patient,
+              incubator,
+              doctor,
+              dutyNurse,
+              reading,
+              type,
+              value,
+              result,
+            });
 
-          console.log("\n================ [CLINICAL ADVISORY - AUTOMATED DISPATCH] ================");
+            docWhatsappText = aiEvaluation.doctorAdvisory;
+            nurseWhatsappText = aiEvaluation.nurseAdvisory;
+
+            // Persist AI clinical assessment to alert document
+            alert.aiAssessment = {
+              analyzed: true,
+              model: aiEvaluation.model || "gemini-3.6-flash",
+              isArtifact: Boolean(aiEvaluation.isArtifact),
+              clinicalImpression: aiEvaluation.clinicalImpression || "",
+              confidence: aiEvaluation.confidence || 0.95,
+              suggestedOrders: aiEvaluation.suggestedOrders || [],
+              evaluatedAt: new Date(),
+            };
+            await alert.save();
+          } catch (aiErr) {
+            console.error("[alertEngine] AI evaluation fallback:", aiErr.message);
+          }
+
+          console.log("\n================ [CLINICAL ADVISORY - AI AUTOMATED DISPATCH] ================");
           console.log(`Doctor     : ${doctorName} (${doctorPhone || "No phone registered"})`);
           console.log(`Duty Nurse : ${nurseName} (${nursePhone || "No phone registered"})`);
           console.log(`Patient    : ${patientName} (${incubatorLabel})`);
           console.log(`Condition  : ${result.condition} (${type}: ${value})`);
-          console.log("==========================================================================\n");
+          console.log(`AI Engine  : ${alert.aiAssessment?.model || "gemini-3.6-flash"}`);
+          console.log("==============================================================================\n");
 
-          // Dispatch simultaneously to Doctor and Nurse via WhatsApp Service
+          // Dispatch simultaneously to Doctor and Nurse via WhatsApp / SMS Service
           try {
             await notifyClinicalTeamSimultaneously({
               doctorPhone,

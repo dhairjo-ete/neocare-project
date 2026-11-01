@@ -201,13 +201,18 @@ async function notifyClinicalTeam(req, res) {
 
   const formattedDoc = doctorName ? (doctorName.startsWith("Dr.") ? doctorName : `Dr. ${doctorName}`) : "Attending Physician";
 
+  const aiNote = (alert.aiAssessment?.analyzed && alert.aiAssessment?.clinicalImpression)
+    ? `\n• *AI Assessment (Gemini 3.6 Flash)*: ${alert.aiAssessment.clinicalImpression}`
+    : "";
+
   const docMessage = `🩺 *NEOCARE CLINICAL ADVISORY • ATTENDING PHYSICIAN*\n\n` +
     `Dear ${formattedDoc},\n\n` +
     `Supervisory notification regarding patient under your care:\n\n` +
     `• Patient: *${patientName}*\n` +
     `• Bed Location: *${incubatorLabel}*\n` +
     `• Observation: *${condition}*\n` +
-    `• Recorded Value: *${typeFormatted}: ${value}*\n` +
+    `• Recorded Value: *${typeFormatted}: ${value}*` +
+    `${aiNote}\n` +
     `• Timestamp: ${new Date().toLocaleTimeString()}\n\n` +
     `A bedside evaluation or telemetry chart review is recommended at your earliest clinical convenience.\n\n` +
     `Hospital Administration • NeoCare Clinical Monitoring`;

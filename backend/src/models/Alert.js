@@ -27,6 +27,17 @@ const alertSchema = new mongoose.Schema({
   escalated: { type: Boolean, default: false },
   escalatedAt: { type: Date, default: null },
 
+  // AI Clinical Decision Support & Deterioration Assessment (Gemini 3.6 Flash)
+  aiAssessment: {
+    analyzed: { type: Boolean, default: false },
+    model: { type: String, default: "" },
+    isArtifact: { type: Boolean, default: false },
+    clinicalImpression: { type: String, default: "" },
+    confidence: { type: Number, default: 0 },
+    suggestedOrders: [{ type: String }],
+    evaluatedAt: { type: Date, default: null },
+  },
+
   hospitalId: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital", default: null, index: true },
   wardId: { type: mongoose.Schema.Types.ObjectId, ref: "Ward", default: null },
   incubatorId: { type: mongoose.Schema.Types.ObjectId, ref: "Incubator", default: null },

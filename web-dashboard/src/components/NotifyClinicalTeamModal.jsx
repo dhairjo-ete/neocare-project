@@ -238,6 +238,22 @@ export default function NotifyClinicalTeamModal({
             <span><strong>Observation:</strong> {condition}</span>
             <span><strong>Reading:</strong> {vitalType ? `${vitalType}: ${vitalValue}` : vitalValue}</span>
           </div>
+
+          {alertData.aiAssessment?.clinicalImpression && (
+            <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255, 255, 255, 0.08)", color: "#38bdf8" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <span>✨ Gemini 3.6 Flash Assessment</span>
+                {alertData.aiAssessment.confidence && (
+                  <span style={{ background: "rgba(56, 189, 248, 0.15)", padding: "1px 6px", borderRadius: 4, color: "#38bdf8" }}>
+                    {Math.round(alertData.aiAssessment.confidence * 100)}% confidence
+                  </span>
+                )}
+              </div>
+              <div style={{ marginTop: 4, color: "var(--text-primary, #f1f5f9)", fontSize: 12 }}>
+                {alertData.aiAssessment.clinicalImpression}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Clinical Recipients Overview */}
