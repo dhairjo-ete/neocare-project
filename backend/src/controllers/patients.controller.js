@@ -9,6 +9,7 @@ const { closeAlertsForPatient } = require("../services/alertEngine");
 const { sendAdmissionSms } = require("../services/sms.service");
 const { sendWhatsAppMessage } = require("../services/whatsappService");
 const { generateGuardianAdmissionMessageWithGemini } = require("../services/geminiClinicalAgent");
+const { invalidateTelemetryCache } = require("../services/telemetrySimulator");
 
 function formatDoctorTitle(name) {
   if (!name) return "Doctor";
@@ -240,8 +241,9 @@ async function createPatient(req, res) {
     magicLink,
   });
 
-  // Invalidate the MQTT scope cache so vitals start streaming immediately for this bed
+  // Invalidate the MQTT & Telemetry scope caches so vitals start streaming immediately for this bed
   invalidateIncubatorCache(incubator.deviceTopicId);
+  invalidateTelemetryCache();
 
   emitDataChange("patient", "create", patient);
   res.status(201).json({
@@ -374,11 +376,12 @@ async function dischargePatient(req, res) {
   await resolvePendingDischargeRequests(patient._id, { resolvedByName: req.user.name });
   await closeAlertsForPatient(patient._id, patient.hospitalId);
 
-  // Invalidate MQTT scope cache so phantom vitals stop immediately
+  // Invalidate MQTT & Telemetry scope caches so phantom vitals stop immediately
   const dischargedIncubator = await Incubator.findById(patient.incubatorId).select("deviceTopicId");
   if (dischargedIncubator) {
     invalidateIncubatorCache(dischargedIncubator.deviceTopicId);
   }
+  invalidateTelemetryCache();
 
   emitDataChange("patient", "discharge", patient);
   res.json(patient);

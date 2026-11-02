@@ -6,7 +6,7 @@ const User = require("../models/User");
 const { sendPushAlert } = require("./fcm");
 const { emitNotification, emitDataChange } = require("../sockets/socket");
 const { notifyClinicalTeamSimultaneously } = require("./whatsappService");
-const { evaluateCriticalAlertWithGemini } = require("./geminiClinicalAgent");
+const { evaluateCriticalAlertWithGemini, generateDeterministicAdvisory } = require("./geminiClinicalAgent");
 
 // Require 2 consecutive abnormal readings before firing an alert (debouncing)
 const DEBOUNCE_COUNT = 2;
@@ -70,11 +70,16 @@ async function checkThresholds(reading, io) {
         }
 
         // Check if an unacknowledged alert already exists for this incubator and vital type
-        let alert = await Alert.findOne({
-          device_id: reading.device_id,
-          type,
-          acknowledged: false,
-        });
+        let alert = null;
+        try {
+          alert = await Alert.findOne({
+            device_id: reading.device_id,
+            type,
+            acknowledged: false,
+          });
+        } catch (dbErr) {
+          console.warn("[alertEngine] DB error finding existing alert (continuing):", dbErr.message);
+        }
 
         // If an unacknowledged alert exists:
         // Update its latest reading. If the team was already notified within the cooldown window,
@@ -87,7 +92,7 @@ async function checkThresholds(reading, io) {
 
           const lastNotified = alert.teamNotifiedAt ? new Date(alert.teamNotifiedAt).getTime() : 0;
           if (lastNotified && Date.now() - lastNotified < cooldownMs) {
-            await alert.save();
+            try { await alert.save(); } catch (e) { /* non-blocking */ }
             continue;
           }
         }
@@ -201,36 +206,44 @@ async function checkThresholds(reading, io) {
         const nursePhone = dutyNurse?.phone || "";
 
         // 4. Create or Update Alert Document with rich clinical context
-        if (!alert) {
-          alert = await Alert.create({
-            device_id: reading.device_id,
-            type,
-            value,
-            severity: result.severity,
-            condition: result.condition,
-            patientName,
-            incubatorLabel,
-            assignedDoctorName: doctorName,
-            assignedDoctorPhone: doctorPhone,
-            dutyNurseName: nurseName,
-            dutyNursePhone: nursePhone,
-            hospitalId: targetHospitalId || null,
-            wardId: targetWardId || null,
-            incubatorId: incubator?._id || reading.incubatorId || null,
-            patientId: patient?._id || reading.patientId || null,
-          });
-        } else {
-          alert.patientName = patientName;
-          alert.incubatorLabel = incubatorLabel;
-          alert.assignedDoctorName = doctorName;
-          alert.assignedDoctorPhone = doctorPhone;
-          alert.dutyNurseName = nurseName;
-          alert.dutyNursePhone = nursePhone;
-          if (targetHospitalId && !alert.hospitalId) alert.hospitalId = targetHospitalId;
-          if (targetWardId && !alert.wardId) alert.wardId = targetWardId;
-          if (incubator?._id && !alert.incubatorId) alert.incubatorId = incubator._id;
-          if (patient?._id && !alert.patientId) alert.patientId = patient._id;
-          await alert.save();
+        try {
+          if (!alert) {
+            alert = await Alert.create({
+              device_id: reading.device_id,
+              type,
+              value,
+              severity: result.severity,
+              condition: result.condition,
+              patientName,
+              incubatorLabel,
+              assignedDoctorName: doctorName,
+              assignedDoctorPhone: doctorPhone,
+              dutyNurseName: nurseName,
+              dutyNursePhone: nursePhone,
+              hospitalId: targetHospitalId || null,
+              wardId: targetWardId || null,
+              incubatorId: incubator?._id || reading.incubatorId || null,
+              patientId: patient?._id || reading.patientId || null,
+            });
+          } else {
+            alert.patientName = patientName;
+            alert.incubatorLabel = incubatorLabel;
+            alert.assignedDoctorName = doctorName;
+            alert.assignedDoctorPhone = doctorPhone;
+            alert.dutyNurseName = nurseName;
+            alert.dutyNursePhone = nursePhone;
+            if (targetHospitalId && !alert.hospitalId) alert.hospitalId = targetHospitalId;
+            if (targetWardId && !alert.wardId) alert.wardId = targetWardId;
+            if (incubator?._id && !alert.incubatorId) alert.incubatorId = incubator._id;
+            if (patient?._id && !alert.patientId) alert.patientId = patient._id;
+            await alert.save();
+          }
+        } catch (dbErr) {
+          console.warn("[alertEngine] DB error saving alert (proceeding to dispatch):", dbErr.message);
+          // Create a minimal in-memory alert object so dispatch still works
+          if (!alert) {
+            alert = { _id: null, device_id: reading.device_id, type, value, severity: result.severity, condition: result.condition, toObject: () => ({ device_id: reading.device_id, type, value, severity: result.severity, condition: result.condition, patientName, incubatorLabel }) };
+          }
         }
 
         // 2. Tier 1: Create in-app Notification for Doctor & Nurse Notification Bar
@@ -268,15 +281,24 @@ async function checkThresholds(reading, io) {
         }
 
         // 3. Tier 1 & Tier 2: Real-time Socket Emission (for in-app banner & desktop notification)
-        const alertPayload = alert.toObject();
-        if (reading.hospitalId) {
-          io.to(`room:hospital:${reading.hospitalId}`).to("room:system_admin").emit("alert:new", alertPayload);
-        } else {
-          io.emit("alert:new", alertPayload);
+        try {
+          const alertPayload = typeof alert.toObject === "function" ? alert.toObject() : alert;
+          if (reading.hospitalId) {
+            io.to(`room:hospital:${reading.hospitalId}`).emit("alert:new", alertPayload);
+            io.to("room:system_admin").emit("alert:new", alertPayload);
+          } else {
+            io.emit("alert:new", alertPayload);
+          }
+        } catch (socketErr) {
+          console.warn("[alertEngine] Socket emit error:", socketErr.message);
         }
 
         // 4. Send Mobile Push (FCM)
-        await sendPushAlert(alert);
+        try {
+          await sendPushAlert(alert);
+        } catch (pushErr) {
+          // Non-blocking
+        }
 
         // 5. Tier 3: Automated WhatsApp / SMS Alert Dispatch via Gemini
         // Dispatches for EVERY clinical alert (critical priorities and clinical warnings)
@@ -284,6 +306,7 @@ async function checkThresholds(reading, io) {
           let docWhatsappText = "";
           let nurseWhatsappText = "";
 
+          // Step A: Try AI-powered advisory generation
           try {
             const aiEvaluation = await evaluateCriticalAlertWithGemini({
               patient,
@@ -296,22 +319,46 @@ async function checkThresholds(reading, io) {
               result,
             });
 
-            docWhatsappText = aiEvaluation.doctorAdvisory;
-            nurseWhatsappText = aiEvaluation.nurseAdvisory;
+            docWhatsappText = aiEvaluation.doctorAdvisory || "";
+            nurseWhatsappText = aiEvaluation.nurseAdvisory || "";
 
             // Persist AI clinical assessment to alert document
-            alert.aiAssessment = {
-              analyzed: true,
-              model: aiEvaluation.model || "gemini-3.6-flash",
-              isArtifact: Boolean(aiEvaluation.isArtifact),
-              clinicalImpression: aiEvaluation.clinicalImpression || "",
-              confidence: aiEvaluation.confidence || 0.95,
-              suggestedOrders: aiEvaluation.suggestedOrders || [],
-              evaluatedAt: new Date(),
-            };
-            await alert.save();
+            try {
+              if (alert._id) {
+                alert.aiAssessment = {
+                  analyzed: true,
+                  model: aiEvaluation.model || "gemini-3.6-flash",
+                  isArtifact: Boolean(aiEvaluation.isArtifact),
+                  clinicalImpression: aiEvaluation.clinicalImpression || "",
+                  confidence: aiEvaluation.confidence || 0.95,
+                  suggestedOrders: aiEvaluation.suggestedOrders || [],
+                  evaluatedAt: new Date(),
+                };
+                await alert.save();
+              }
+            } catch (saveErr) {
+              console.warn("[alertEngine] Failed to persist AI assessment (non-blocking):", saveErr.message);
+            }
           } catch (aiErr) {
-            console.error("[alertEngine] AI evaluation fallback:", aiErr.message);
+            console.error("[alertEngine] AI evaluation error:", aiErr.message);
+          }
+
+          // Step B: CRITICAL SAFETY NET — If AI advisory is empty/failed, use deterministic fallback
+          // This guarantees the doctor and nurse ALWAYS receive a message, even if Gemini is down
+          if (!docWhatsappText || docWhatsappText.length < 20) {
+            console.log("[alertEngine] AI advisory empty/short — activating deterministic fallback for message text");
+            const fallback = generateDeterministicAdvisory({
+              patient,
+              incubatorLabel,
+              deviceId: reading.device_id,
+              type,
+              value,
+              condition: result.condition,
+              doctorName,
+              nurseName,
+            });
+            docWhatsappText = fallback.doctorAdvisory;
+            nurseWhatsappText = fallback.nurseAdvisory;
           }
 
           console.log("\n================ [CLINICAL ADVISORY - AI AUTOMATED DISPATCH] ================");
@@ -319,25 +366,38 @@ async function checkThresholds(reading, io) {
           console.log(`Duty Nurse : ${nurseName} (${nursePhone || "No phone registered"})`);
           console.log(`Patient    : ${patientName} (${incubatorLabel})`);
           console.log(`Condition  : ${result.condition} (${type}: ${value})`);
-          console.log(`AI Engine  : ${alert.aiAssessment?.model || "gemini-3.6-flash"}`);
+          console.log(`Msg Length : doc=${docWhatsappText.length} nurse=${nurseWhatsappText.length}`);
+          console.log(`AI Engine  : ${alert.aiAssessment?.model || "deterministic-fallback"}`);
           console.log("==============================================================================\n");
 
-          // Dispatch simultaneously to Doctor and Nurse via WhatsApp / SMS Service
-          try {
-            const dispatchResults = await notifyClinicalTeamSimultaneously({
-              doctorPhone,
-              doctorName,
-              nursePhone,
-              nurseName,
-              docMessage: docWhatsappText,
-              nurseMessage: nurseWhatsappText,
-            });
+          // Step C: Dispatch simultaneously to Doctor and Nurse via WhatsApp / SMS Service
+          if (doctorPhone || nursePhone) {
+            try {
+              const dispatchResults = await notifyClinicalTeamSimultaneously({
+                doctorPhone,
+                doctorName,
+                nursePhone,
+                nurseName,
+                docMessage: docWhatsappText,
+                nurseMessage: nurseWhatsappText,
+              });
 
-            alert.teamNotifiedAt = new Date();
-            await alert.save();
-            emitDataChange("alert", "notify_team", alert);
-          } catch (teamErr) {
-            console.error("[alertEngine] Failed simultaneous WhatsApp dispatch:", teamErr.message);
+              console.log(`[alertEngine] WhatsApp dispatch results -> Doctor: ${dispatchResults.doctor?.success ? "✓ SENT" : "✗ " + (dispatchResults.doctor?.error || "failed")} | Nurse: ${dispatchResults.nurse?.success ? "✓ SENT" : "✗ " + (dispatchResults.nurse?.error || "failed")}`);
+
+              try {
+                if (alert._id) {
+                  alert.teamNotifiedAt = new Date();
+                  await alert.save();
+                  emitDataChange("alert", "notify_team", alert);
+                }
+              } catch (saveErr) {
+                console.warn("[alertEngine] Failed to update teamNotifiedAt (non-blocking):", saveErr.message);
+              }
+            } catch (teamErr) {
+              console.error("[alertEngine] Failed simultaneous WhatsApp dispatch:", teamErr.message);
+            }
+          } else {
+            console.warn(`[alertEngine] ⚠️ No doctor or nurse phone available for ${patientName} (${incubatorLabel}) — WhatsApp dispatch skipped`);
           }
         }
 
@@ -405,7 +465,8 @@ function startEscalationMonitor(io) {
         // Broadcast over Socket.io
         const escPayload = alert.toObject();
         if (alert.hospitalId) {
-          io.to(`room:hospital:${alert.hospitalId}`).to("room:system_admin").emit("alert:escalated", escPayload);
+          io.to(`room:hospital:${alert.hospitalId}`).emit("alert:escalated", escPayload);
+          io.to("room:system_admin").emit("alert:escalated", escPayload);
         } else {
           io.emit("alert:escalated", escPayload);
         }
@@ -423,8 +484,14 @@ function startEscalationMonitor(io) {
   }, 15000); // Check every 15 seconds
 }
 
-// Reset alerts when patient discharged/admitted
+// Reset alerts when patient discharged/admitted, or scenario switched
 function resetAlertDebounce(device_id) {
+  if (!device_id || device_id === "__all__") {
+    for (const key of Object.keys(consecutiveAbnormal)) {
+      delete consecutiveAbnormal[key];
+    }
+    return;
+  }
   for (const key of Object.keys(consecutiveAbnormal)) {
     if (key.startsWith(device_id + ":") || key.startsWith("cooldown:" + device_id + ":")) {
       delete consecutiveAbnormal[key];

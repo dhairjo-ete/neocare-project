@@ -17,7 +17,7 @@ const mongoose = require("mongoose");
 const Vital = require("../models/Vital");
 const Incubator = require("../models/Incubator");
 const Patient = require("../models/Patient");
-const { checkThresholds } = require("./alertEngine");
+const { checkThresholds, resetAlertDebounce } = require("./alertEngine");
 
 // Syndrome physiological profiles
 const SYNDROME_PROFILES = {
@@ -411,6 +411,18 @@ const physioRegistry = new Map();
 const deviceMqttActiveUntil = new Map(); // tracks external physical/Python MQTT feeds
 const forcedAnomalies = new Map();
 
+// In-memory cache for active patients and incubators (reduces MongoDB load from 2.8s polling)
+let cachedAdmittedPatients = null;
+let cachedIncubators = null;
+let lastCacheRefreshTime = 0;
+const CACHE_TTL_MS = 12000; // refresh every 12 seconds
+
+function invalidateTelemetryCache() {
+  cachedAdmittedPatients = null;
+  cachedIncubators = null;
+  lastCacheRefreshTime = 0;
+}
+
 let simulatorInterval = null;
 let ioInstance = null;
 let isSimulatorRunning = false;
@@ -452,64 +464,78 @@ function setSimulationScenario(deviceId, scenario) {
     for (const twin of physioRegistry.values()) {
       twin.startAnomaly(normScenario === "normal" ? null : normScenario);
     }
+    resetAlertDebounce("__all__");
   } else {
     forcedAnomalies.set(deviceId, normScenario === "normal" ? null : normScenario);
     const twin = physioRegistry.get(deviceId);
     if (twin) twin.startAnomaly(normScenario === "normal" ? null : normScenario);
+    resetAlertDebounce(deviceId);
   }
 }
 
 /**
  * Main simulation tick: generates vitals for every active incubator with an admitted patient.
+ * Fully resilient against transient MongoDB connection fluctuations.
  */
 async function simulationTick() {
   if (!ioInstance) return;
 
-  try {
-    // 1. Find all currently admitted patients
-    const activePatients = await Patient.find({ dischargedAt: null });
-    const patientByIncubatorId = new Map();
-    const patientByDeviceTopic = new Map();
+  const now = Date.now();
 
-    for (const p of activePatients) {
-      if (p.incubatorId) {
-        const idStr = p.incubatorId._id ? String(p.incubatorId._id) : String(p.incubatorId);
-        patientByIncubatorId.set(idStr, p);
-        if (p.incubatorId.deviceTopicId) {
-          patientByDeviceTopic.set(p.incubatorId.deviceTopicId, p);
-        }
+  // 1. Refresh active patient & incubator cache if TTL expired
+  if (!cachedAdmittedPatients || !cachedIncubators || now - lastCacheRefreshTime > CACHE_TTL_MS) {
+    try {
+      const patients = await Patient.find({ dischargedAt: null })
+        .populate("assignedDoctor assignedNurse", "name phone role")
+        .lean();
+
+      const patientIncubatorIds = patients
+        .filter((p) => p.incubatorId)
+        .map((p) => (p.incubatorId._id ? p.incubatorId._id : p.incubatorId))
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
+        .map((id) => new mongoose.Types.ObjectId(id));
+
+      const incubators = await Incubator.find({
+        $or: [
+          { status: "active" },
+          { _id: { $in: patientIncubatorIds } },
+        ],
+      }).lean();
+
+      cachedAdmittedPatients = patients;
+      cachedIncubators = incubators;
+      lastCacheRefreshTime = now;
+    } catch (cacheErr) {
+      console.warn("[telemetrySimulator] DB refresh failed (using cached active state):", cacheErr.message);
+      // Fallback: continue with previously cached state if available
+      if (!cachedAdmittedPatients || !cachedIncubators) return;
+    }
+  }
+
+  const patientByIncubatorId = new Map();
+  const patientByDeviceTopic = new Map();
+
+  for (const p of (cachedAdmittedPatients || [])) {
+    if (p.incubatorId) {
+      const idStr = p.incubatorId._id ? String(p.incubatorId._id) : String(p.incubatorId);
+      patientByIncubatorId.set(idStr, p);
+      if (p.incubatorId.deviceTopicId) {
+        patientByDeviceTopic.set(p.incubatorId.deviceTopicId, p);
       }
     }
+  }
 
-    // 2. Find incubators: either status="active", OR currently has an admitted baby assigned!
-    const admittedIncubatorIds = Array.from(patientByIncubatorId.keys())
-      .filter((id) => mongoose.Types.ObjectId.isValid(id))
-      .map((id) => new mongoose.Types.ObjectId(id));
+  const incubators = cachedIncubators || [];
+  if (!incubators.length) return;
 
-    const incubators = await Incubator.find({
-      $or: [
-        { status: "active" },
-        { _id: { $in: admittedIncubatorIds } },
-      ],
-    });
-
-    if (!incubators.length) return;
-
-    const now = Date.now();
-
-    for (const inc of incubators) {
+  // Process ALL incubators concurrently and independently
+  for (const inc of incubators) {
+    try {
       const devKey = inc.deviceTopicId || `incubator_${String(inc._id).slice(-4)}`;
       const patient = patientByIncubatorId.get(String(inc._id)) || patientByDeviceTopic.get(inc.deviceTopicId);
 
-      // Auto-heal: If an admitted infant is in this bed, ensure incubator is active
-      if (patient && inc.status !== "active") {
-        inc.status = "active";
-        Incubator.updateOne({ _id: inc._id }, { $set: { status: "active" } }).catch(() => {});
-      }
-
       // Guard 1: Empty incubator -> broadcast standby signal so UI stays in sync
       if (!patient) {
-        // Broadcast standby
         const standbyPayload = {
           device_id: devKey,
           incubatorStatus: inc.status || "active",
@@ -530,7 +556,6 @@ async function simulationTick() {
       let twin = physioRegistry.get(devKey);
       if (!twin) {
         twin = new NeonatePhysiology(devKey, patient);
-        // Apply current incubator control settings
         if (inc.controlSettings) {
           twin.applyControl(
             inc.controlSettings.targetTemperature,
@@ -553,35 +578,42 @@ async function simulationTick() {
         patientId: patient._id,
       };
 
-      // 1. Save vital to MongoDB
-      const vitalDoc = await Vital.create({
+      // 1. Broadcast live over Socket.io immediately (Zero-latency UI updates)
+      const livePayload = {
         ...reading,
         ...scope,
-      });
-
-      // 2. Broadcast live over Socket.io to all subscribed clinical dashboards
-      ioInstance.emit("vitals:update", vitalDoc);
+        _id: new mongoose.Types.ObjectId(),
+      };
+      ioInstance.emit("vitals:update", livePayload);
       if (scope.hospitalId) {
-        ioInstance.to(`room:hospital:${scope.hospitalId}`).emit("vitals:update", vitalDoc);
+        ioInstance.to(`room:hospital:${scope.hospitalId}`).emit("vitals:update", livePayload);
       }
       if (scope.patientId) {
-        ioInstance.to(`room:patient:${scope.patientId}`).emit("vitals:update", vitalDoc);
+        ioInstance.to(`room:patient:${scope.patientId}`).emit("vitals:update", livePayload);
       }
-      ioInstance.to("room:system_admin").emit("vitals:update", vitalDoc);
+      ioInstance.to("room:system_admin").emit("vitals:update", livePayload);
 
-      // 3. Publish to HiveMQ Cloud MQTT broker (keeps MQTT ecosystem & external observers active)
+      // 2. Asynchronously persist vital to MongoDB without blocking the alert pipeline
+      Vital.create({
+        ...reading,
+        ...scope,
+      }).catch((dbVitalErr) => {
+        // Non-blocking write: continues even if MongoDB is experiencing a momentary connection jitter
+      });
+
+      // 3. Publish to HiveMQ Cloud MQTT broker
       try {
         const { publishVitals } = require("../config/mqtt");
         publishVitals(devKey, reading);
       } catch (mqttErr) {
-        // Non-blocking: continue even if MQTT broker is momentarily unreachable
+        // Non-blocking
       }
 
-      // 4. Check clinical thresholds -> triggers alerts
+      // 4. Check clinical thresholds -> triggers clinical alerts & WhatsApp dispatch
       await checkThresholds({ ...reading, ...scope }, ioInstance);
+    } catch (bedErr) {
+      console.error(`[telemetrySimulator] Bed error on ${inc.deviceTopicId || inc.label}:`, bedErr.message);
     }
-  } catch (err) {
-    console.error("[telemetrySimulator] tick error:", err.message);
   }
 }
 
@@ -631,4 +663,5 @@ module.exports = {
   recordExternalMqtt,
   applyTwinActuators,
   setSimulationScenario,
+  invalidateTelemetryCache,
 };

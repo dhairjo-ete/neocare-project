@@ -28,6 +28,11 @@ async function sendWhatsAppMessage({ phone, message, role = "clinician" }) {
     return { success: false, provider: "none", error: "Missing or invalid phone number" };
   }
 
+  // Guard: reject empty or trivially short message bodies
+  if (!message || message.trim().length < 10) {
+    return { success: false, provider: "none", error: `Message body too short or empty (length: ${(message || "").length})` };
+  }
+
   // 1. Official Meta WhatsApp Cloud API (Direct from Meta - Zero Ban Risk)
   // https://developers.facebook.com/docs/whatsapp/cloud-api
   if (process.env.WHATSAPP_CLOUD_API_ACCESS_TOKEN && process.env.WHATSAPP_CLOUD_API_PHONE_NUMBER_ID) {
