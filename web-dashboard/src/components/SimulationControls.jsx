@@ -15,6 +15,7 @@ export default function SimulationControls({ selectedDevice = null }) {
   const [status, setStatus] = useState({ running: true, forcedScenario: null });
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+  const [targetScope, setTargetScope] = useState("all"); // "all" | "single"
 
   useEffect(() => {
     axiosClient.get("/simulator/status")
@@ -39,14 +40,16 @@ export default function SimulationControls({ selectedDevice = null }) {
 
   async function handleApplyScenario(scenarioId) {
     setLoading(true);
+    const targetId = (targetScope === "single" && selectedDevice) ? selectedDevice : "__all__";
     try {
       const res = await axiosClient.post("/simulator/scenario", {
         scenario: scenarioId,
-        deviceId: selectedDevice || "__all__",
+        deviceId: targetId,
       });
       setStatus((prev) => ({ ...prev, forcedScenario: scenarioId === "normal" ? null : scenarioId }));
-      setMsg(`Applied ${scenarioId.toUpperCase()}`);
-      setTimeout(() => setMsg(""), 3000);
+      const scopeLabel = targetId === "__all__" ? "ALL BEDS" : targetId;
+      setMsg(`Applied ${scenarioId.toUpperCase()} to ${scopeLabel}`);
+      setTimeout(() => setMsg(""), 3500);
       setOpen(false);
     } catch {
       setMsg("Failed to apply scenario");
@@ -144,9 +147,49 @@ export default function SimulationControls({ selectedDevice = null }) {
               </button>
             </div>
 
-            <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 10px", lineHeight: 1.35 }}>
+            <p style={{ fontSize: 11, color: "var(--text-tertiary)", margin: "0 0 8px", lineHeight: 1.35 }}>
               Streams realistic AR-1 neonatal vitals automatically for occupied beds. Select a clinical scenario to test alerts:
             </p>
+
+            {/* Scope Selection: All Beds vs Single Bed */}
+            <div style={{ display: "flex", gap: 4, marginBottom: 8, background: "rgba(0,0,0,0.2)", padding: 2, borderRadius: 4 }}>
+              <button
+                type="button"
+                onClick={() => setTargetScope("all")}
+                style={{
+                  flex: 1,
+                  fontSize: 10.5,
+                  padding: "4px 6px",
+                  borderRadius: 3,
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: targetScope === "all" ? 700 : 500,
+                  background: targetScope === "all" ? "var(--brand)" : "transparent",
+                  color: targetScope === "all" ? "#fff" : "var(--text-tertiary)",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                ⚡ All Incubators
+              </button>
+              <button
+                type="button"
+                onClick={() => setTargetScope("single")}
+                style={{
+                  flex: 1,
+                  fontSize: 10.5,
+                  padding: "4px 6px",
+                  borderRadius: 3,
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: targetScope === "single" ? 700 : 500,
+                  background: targetScope === "single" ? "var(--brand)" : "transparent",
+                  color: targetScope === "single" ? "#fff" : "var(--text-tertiary)",
+                  transition: "all 0.15s ease",
+                }}
+              >
+                📍 Bed: {selectedDevice || "Bed 1"}
+              </button>
+            </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {SCENARIOS.map((sc) => {

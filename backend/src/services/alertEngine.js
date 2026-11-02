@@ -60,79 +60,136 @@ async function checkThresholds(reading, io) {
       consecutiveAbnormal[key] = (consecutiveAbnormal[key] || 0) + 1;
 
       if (consecutiveAbnormal[key] >= DEBOUNCE_COUNT) {
-        // Cooldown: 5 minutes per alert type per severity per incubator
+        // Cooldown: configurable throttle per vital type per severity per incubator (defaults to 90 seconds)
+        const cooldownSeconds = Number(process.env.ALERT_COOLDOWN_SECONDS) || 90;
+        const cooldownMs = cooldownSeconds * 1000;
         const cooldownKey = `cooldown:${key}:${result.severity}`;
         const lastAlertTime = consecutiveAbnormal[cooldownKey];
-        if (lastAlertTime && Date.now() - lastAlertTime < 5 * 60 * 1000) {
+        if (lastAlertTime && Date.now() - lastAlertTime < cooldownMs) {
           continue; // In cooldown for this specific severity
         }
 
         // Check if an unacknowledged alert already exists for this incubator and vital type
-        const existingAlert = await Alert.findOne({
+        let alert = await Alert.findOne({
           device_id: reading.device_id,
           type,
           acknowledged: false,
         });
 
-        if (existingAlert) {
-          // If already alarmed at the same severity, update value without flooding the UI with duplicate alerts
-          if (existingAlert.severity === result.severity) {
-            existingAlert.value = value;
-            existingAlert.timestamp = new Date();
-            await existingAlert.save();
+        // If an unacknowledged alert exists:
+        // Update its latest reading. If the team was already notified within the cooldown window,
+        // update the document and skip duplicate dispatch.
+        if (alert) {
+          alert.value = value;
+          alert.timestamp = new Date();
+          alert.severity = result.severity;
+          alert.condition = result.condition;
+
+          const lastNotified = alert.teamNotifiedAt ? new Date(alert.teamNotifiedAt).getTime() : 0;
+          if (lastNotified && Date.now() - lastNotified < cooldownMs) {
+            await alert.save();
             continue;
           }
         }
 
-        // Fetch Patient, Doctor, Nurse, and Incubator metadata
-        let patient = null;
-        let doctor = null;
-        let dutyNurse = null;
+        // 1. Resolve Incubator metadata
         let incubator = null;
-
-        if (reading.patientId) {
-          try {
-            patient = await Patient.findById(reading.patientId).populate("assignedDoctor assignedNurse", "name phone role");
-            if (patient?.assignedDoctor) {
-              doctor = patient.assignedDoctor;
-            }
-            if (patient?.assignedNurse) {
-              dutyNurse = patient.assignedNurse;
-            }
-          } catch (e) {
-            console.warn("[alertEngine] Failed to populate patient:", e.message);
-          }
-        }
-
         if (reading.incubatorId) {
           try {
-            incubator = await Incubator.findById(reading.incubatorId).select("label deviceTopicId wardId");
+            incubator = await Incubator.findById(reading.incubatorId).select("label deviceTopicId wardId hospitalId");
           } catch (e) {
             console.warn("[alertEngine] Failed to populate incubator:", e.message);
           }
         }
+        if (!incubator && reading.device_id) {
+          try {
+            incubator = await Incubator.findOne({
+              $or: [{ deviceTopicId: reading.device_id }, { label: reading.device_id }],
+            }).select("label deviceTopicId wardId hospitalId");
+          } catch (e) {
+            console.warn("[alertEngine] Failed to resolve incubator by device_id:", e.message);
+          }
+        }
 
-        // Locate duty nurse assigned to this ward or hospital
+        // 2. Resolve Patient (Admitted Infant)
+        let patient = null;
+        let doctor = null;
+        let dutyNurse = null;
+
+        if (reading.patientId) {
+          try {
+            patient = await Patient.findById(reading.patientId).populate("assignedDoctor assignedNurse", "name phone role");
+          } catch (e) {
+            console.warn("[alertEngine] Failed to populate patient by reading.patientId:", e.message);
+          }
+        }
+
+        // If patient not explicitly provided, find active admitted patient in this incubator
+        if (!patient && incubator?._id) {
+          try {
+            patient = await Patient.findOne({ incubatorId: incubator._id, dischargedAt: null })
+              .populate("assignedDoctor assignedNurse", "name phone role");
+          } catch (e) {
+            console.warn("[alertEngine] Failed to resolve active patient for incubator:", e.message);
+          }
+        }
+
+        if (patient?.assignedDoctor) {
+          doctor = patient.assignedDoctor;
+        }
+        if (patient?.assignedNurse) {
+          dutyNurse = patient.assignedNurse;
+        }
+
+        // 3. Robust Clinician Fallback: If no assigned doctor/nurse on patient profile, locate duty clinician for this hospital/ward
+        const targetHospitalId = reading.hospitalId || incubator?.hospitalId || patient?.hospitalId;
         const targetWardId = reading.wardId || incubator?.wardId;
-        if (targetWardId || reading.hospitalId) {
+
+        if ((!doctor || !doctor.phone) && targetHospitalId) {
           try {
             if (targetWardId) {
-              dutyNurse = await User.findOne({
-                hospitalId: reading.hospitalId,
-                role: "nurse",
+              doctor = await User.findOne({
+                hospitalId: targetHospitalId,
+                role: "doctor",
                 wardId: targetWardId,
                 isApproved: true,
+                phone: { $exists: true, $ne: "" },
               }).select("name phone role");
             }
-            if (!dutyNurse && reading.hospitalId) {
-              dutyNurse = await User.findOne({
-                hospitalId: reading.hospitalId,
-                role: "nurse",
+            if (!doctor) {
+              doctor = await User.findOne({
+                hospitalId: targetHospitalId,
+                role: "doctor",
                 isApproved: true,
+                phone: { $exists: true, $ne: "" },
               }).select("name phone role");
             }
           } catch (e) {
-            console.warn("[alertEngine] Failed to populate duty nurse:", e.message);
+            console.warn("[alertEngine] Failed to find duty doctor fallback:", e.message);
+          }
+        }
+
+        if ((!dutyNurse || !dutyNurse.phone) && targetHospitalId) {
+          try {
+            if (targetWardId) {
+              dutyNurse = await User.findOne({
+                hospitalId: targetHospitalId,
+                role: "nurse",
+                wardId: targetWardId,
+                isApproved: true,
+                phone: { $exists: true, $ne: "" },
+              }).select("name phone role");
+            }
+            if (!dutyNurse) {
+              dutyNurse = await User.findOne({
+                hospitalId: targetHospitalId,
+                role: "nurse",
+                isApproved: true,
+                phone: { $exists: true, $ne: "" },
+              }).select("name phone role");
+            }
+          } catch (e) {
+            console.warn("[alertEngine] Failed to find duty nurse fallback:", e.message);
           }
         }
 
@@ -143,24 +200,38 @@ async function checkThresholds(reading, io) {
         const nurseName = dutyNurse?.name || "Duty Nurse";
         const nursePhone = dutyNurse?.phone || "";
 
-        // 1. Create Alert Document with rich clinical context (including both doctor and nurse)
-        const alert = await Alert.create({
-          device_id: reading.device_id,
-          type,
-          value,
-          severity: result.severity,
-          condition: result.condition,
-          patientName,
-          incubatorLabel,
-          assignedDoctorName: doctorName,
-          assignedDoctorPhone: doctorPhone,
-          dutyNurseName: nurseName,
-          dutyNursePhone: nursePhone,
-          hospitalId: reading.hospitalId || null,
-          wardId: targetWardId || null,
-          incubatorId: reading.incubatorId || null,
-          patientId: reading.patientId || null,
-        });
+        // 4. Create or Update Alert Document with rich clinical context
+        if (!alert) {
+          alert = await Alert.create({
+            device_id: reading.device_id,
+            type,
+            value,
+            severity: result.severity,
+            condition: result.condition,
+            patientName,
+            incubatorLabel,
+            assignedDoctorName: doctorName,
+            assignedDoctorPhone: doctorPhone,
+            dutyNurseName: nurseName,
+            dutyNursePhone: nursePhone,
+            hospitalId: targetHospitalId || null,
+            wardId: targetWardId || null,
+            incubatorId: incubator?._id || reading.incubatorId || null,
+            patientId: patient?._id || reading.patientId || null,
+          });
+        } else {
+          alert.patientName = patientName;
+          alert.incubatorLabel = incubatorLabel;
+          alert.assignedDoctorName = doctorName;
+          alert.assignedDoctorPhone = doctorPhone;
+          alert.dutyNurseName = nurseName;
+          alert.dutyNursePhone = nursePhone;
+          if (targetHospitalId && !alert.hospitalId) alert.hospitalId = targetHospitalId;
+          if (targetWardId && !alert.wardId) alert.wardId = targetWardId;
+          if (incubator?._id && !alert.incubatorId) alert.incubatorId = incubator._id;
+          if (patient?._id && !alert.patientId) alert.patientId = patient._id;
+          await alert.save();
+        }
 
         // 2. Tier 1: Create in-app Notification for Doctor & Nurse Notification Bar
         try {
@@ -252,7 +323,7 @@ async function checkThresholds(reading, io) {
 
           // Dispatch simultaneously to Doctor and Nurse via WhatsApp / SMS Service
           try {
-            await notifyClinicalTeamSimultaneously({
+            const dispatchResults = await notifyClinicalTeamSimultaneously({
               doctorPhone,
               doctorName,
               nursePhone,
@@ -260,6 +331,10 @@ async function checkThresholds(reading, io) {
               docMessage: docWhatsappText,
               nurseMessage: nurseWhatsappText,
             });
+
+            alert.teamNotifiedAt = new Date();
+            await alert.save();
+            emitDataChange("alert", "notify_team", alert);
           } catch (teamErr) {
             console.error("[alertEngine] Failed simultaneous WhatsApp dispatch:", teamErr.message);
           }

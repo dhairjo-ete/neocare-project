@@ -7,6 +7,8 @@ const { invalidateIncubatorCache } = require("../config/mqtt");
 const { resolvePendingDischargeRequests } = require("../services/dischargeRequests");
 const { closeAlertsForPatient } = require("../services/alertEngine");
 const { sendAdmissionSms } = require("../services/sms.service");
+const { sendWhatsAppMessage } = require("../services/whatsappService");
+const { generateGuardianAdmissionMessageWithGemini } = require("../services/geminiClinicalAgent");
 
 function formatDoctorTitle(name) {
   if (!name) return "Doctor";
@@ -182,11 +184,52 @@ async function createPatient(req, res) {
   const baseUrl = (rawBase || "https://neocaretelemetry.netlify.app").trim().replace(/\/+$/, "");
   const magicLink = `${baseUrl}/patient/access?code=${accessCode}`;
 
-  // Fetch hospital name for notification
+  // Fetch hospital, doctor, and nurse details for personalized AI admission greeting
   const Hospital = require("../models/Hospital");
+  const User = require("../models/User");
   const hospital = await Hospital.findById(incubator.hospitalId).select("name");
 
-  // Send automated SMS with magic link to guardian
+  let doctor = null;
+  let dutyNurse = null;
+  if (assignedDoctor) {
+    doctor = await User.findById(assignedDoctor).select("name phone role");
+  }
+  if (assignedNurse) {
+    dutyNurse = await User.findById(assignedNurse).select("name phone role");
+  }
+
+  // Generate empathetic guardian welcome & live telemetry access message with Gemini
+  let aiGuardianMessage = "";
+  try {
+    aiGuardianMessage = await generateGuardianAdmissionMessageWithGemini({
+      patient,
+      incubator,
+      doctor,
+      dutyNurse,
+      hospital,
+      accessCode,
+      magicLink,
+    });
+  } catch (aiErr) {
+    console.error("[Patient Admission] Failed to generate AI guardian greeting:", aiErr.message);
+  }
+
+  // 1. Automated WhatsApp Dispatch directly to Guardian
+  let whatsappResult = { success: false };
+  if (guardianPhone && aiGuardianMessage) {
+    try {
+      whatsappResult = await sendWhatsAppMessage({
+        phone: guardianPhone.trim(),
+        message: aiGuardianMessage,
+        role: "guardian",
+      });
+      console.log(`[Patient Admission] Automated WhatsApp dispatched to guardian (${guardianPhone}):`, whatsappResult.success ? "✓" : "✗");
+    } catch (waErr) {
+      console.error("[Patient Admission] Failed WhatsApp delivery to guardian:", waErr.message);
+    }
+  }
+
+  // 2. Automated SMS Gateway Dispatch
   const smsResult = await sendAdmissionSms({
     guardianPhone: guardianPhone.trim(),
     guardianName: guardianName.trim(),
@@ -205,6 +248,7 @@ async function createPatient(req, res) {
     ...patient.toObject(),
     accessCode,
     magicLink,
+    whatsappDispatched: Boolean(whatsappResult.success),
     smsDispatched: smsResult.success,
   });
 }
