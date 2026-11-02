@@ -108,8 +108,11 @@ function generateDeterministicAdvisory({
     ];
   }
 
+  const isPriority = (condition && condition.toLowerCase().includes("severe")) || false;
+  const badge = isPriority ? "HIGH PRIORITY" : "CLINICAL NOTICE";
+
   const doctorAdvisory =
-    `🩺 *NEOCARE AI CLINICAL ADVISORY • ATTENDING PHYSICIAN*\n\n` +
+    `🩺 *NEOCARE AI CLINICAL ADVISORY • ${badge}*\n\n` +
     `Dear ${formattedDoc},\n\n` +
     `• *Situation*: ${condition} (${paramLabel}: ${value}) detected in *${incubatorLabel}*.\n` +
     `• *Background*: Infant *${patientName}* (GA: ${ga}, BW: ${bw}, ${pna}) admitted with ${syndrome}.\n` +
@@ -120,9 +123,9 @@ function generateDeterministicAdvisory({
     `NeoCare Clinical AI Decision Support`;
 
   const nurseAdvisory =
-    `🩺 *NEOCARE BEDSIDE ADVISORY • URGENT NURSING ACTION*\n\n` +
+    `🩺 *NEOCARE BEDSIDE ADVISORY • ${badge}*\n\n` +
     `Dear ${formattedNurse},\n\n` +
-    `Bedside priority alert regarding *${patientName}* in *${incubatorLabel}* (${paramLabel}: ${value}):\n\n` +
+    `Bedside alert regarding *${patientName}* in *${incubatorLabel}* (${paramLabel}: ${value}):\n\n` +
     `*Immediate Action Checklist*:\n` +
     nurseChecklist.map((c, i) => `${i + 1}. ${c}`).join("\n") + "\n\n" +
     `🔗 *Bedside View*: ${bedUrl}\n\n` +
@@ -249,8 +252,11 @@ Return STRICTLY a JSON object without markdown fences matching:
         ? parsed.nurseChecklist
         : ["Inspect physical sensor probe placement & skin contact", "Verify airway patency", "Inspect incubator canopy"];
 
+      const isPriority = (result?.severity === "critical") || (result?.condition && result.condition.toLowerCase().includes("severe"));
+      const badge = isPriority ? "HIGH PRIORITY" : "CLINICAL NOTICE";
+
       const doctorAdvisory =
-        `🩺 *NEOCARE AI CLINICAL ADVISORY • ATTENDING PHYSICIAN*\n\n` +
+        `🩺 *NEOCARE AI CLINICAL ADVISORY • ${badge}*\n\n` +
         `Dear ${formattedDoc},\n\n` +
         `• *Situation*: ${result.condition || "Vital Variance"} (${paramLabel}: ${value}) in *${incubatorLabel}*.\n` +
         `• *Background*: Infant *${patientName}* (GA: ${ga}, BW: ${bw}, ${pna}) admitted with ${syndrome}.\n` +
@@ -261,9 +267,9 @@ Return STRICTLY a JSON object without markdown fences matching:
         `NeoCare Autonomous Clinical AI`;
 
       const nurseAdvisory =
-        `🩺 *NEOCARE BEDSIDE ADVISORY • URGENT NURSING ACTION*\n\n` +
+        `🩺 *NEOCARE BEDSIDE ADVISORY • ${badge}*\n\n` +
         `Dear ${formattedNurse},\n\n` +
-        `Bedside priority alert for *${patientName}* in *${incubatorLabel}* (${paramLabel}: ${value}):\n\n` +
+        `Bedside alert for *${patientName}* in *${incubatorLabel}* (${paramLabel}: ${value}):\n\n` +
         `*Immediate Action Checklist*:\n` +
         nurseChecklist.slice(0, 4).map((c, i) => `${i + 1}. ${c}`).join("\n") + "\n\n" +
         `🔗 *Bedside Telemetry*: ${bedUrl}\n\n` +

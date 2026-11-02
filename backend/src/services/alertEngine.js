@@ -278,8 +278,9 @@ async function checkThresholds(reading, io) {
         // 4. Send Mobile Push (FCM)
         await sendPushAlert(alert);
 
-        // 5. Tier 3: Automated WhatsApp / SMS Alert Dispatch via Gemini 3.6 Flash
-        if (result.severity === "critical") {
+        // 5. Tier 3: Automated WhatsApp / SMS Alert Dispatch via Gemini
+        // Dispatches for EVERY clinical alert (critical priorities and clinical warnings)
+        if (result.severity === "critical" || result.severity === "warning") {
           let docWhatsappText = "";
           let nurseWhatsappText = "";
 
