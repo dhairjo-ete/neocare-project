@@ -21,6 +21,10 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));
+app.get("/api/version", (req, res) => res.json({
+  version: "2ccec1c",
+  title: "NeoCare Neonatal Incubator Monitoring System"
+}));
 
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/alerts", alertsRoutes);
