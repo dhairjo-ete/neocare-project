@@ -215,7 +215,7 @@ async function notifyClinicalTeam(req, res) {
     `${aiNote}\n` +
     `• Timestamp: ${new Date().toLocaleTimeString()}\n\n` +
     `A bedside evaluation or telemetry chart review is recommended at your earliest clinical convenience.\n\n` +
-    `Hospital Administration • NeoCare Clinical Monitoring`;
+    `Hospital Administration • NeoCare Neonatal Incubator Monitoring System`;
 
   const nurseMessage = `🩺 *NEOCARE BEDSIDE ADVISORY • NURSING STATION*\n\n` +
     `Dear Nurse ${nurseName || "Duty Nurse"},\n\n` +
@@ -226,7 +226,7 @@ async function notifyClinicalTeam(req, res) {
     `• Recorded Value: *${typeFormatted}: ${value}*\n` +
     `• Timestamp: ${new Date().toLocaleTimeString()}\n\n` +
     `Immediate bedside assessment of infant comfort, sensor placement, and vitals is requested.\n\n` +
-    `Hospital Administration • NeoCare Clinical Monitoring`;
+    `Hospital Administration • NeoCare Neonatal Incubator Monitoring System`;
 
   const dispatchResults = await notifyClinicalTeamSimultaneously({
     doctorPhone,
