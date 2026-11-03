@@ -79,8 +79,12 @@ export default function MarqueeBanner() {
       if (newAlert.severity === "critical") {
         setIsDismissed(false);
         setEmergencyAlerts((prev) => {
-          const exists = prev.some((a) => a._id === newAlert._id || (a.device_id === newAlert.device_id && a.type === newAlert.type));
-          if (exists) return prev;
+          const idx = prev.findIndex((a) => String(a._id) === String(newAlert._id) || (a.device_id === newAlert.device_id && a.type === newAlert.type));
+          if (idx !== -1) {
+            const updated = [...prev];
+            updated[idx] = { ...updated[idx], ...newAlert };
+            return updated;
+          }
           return [newAlert, ...prev].slice(0, 5);
         });
       }

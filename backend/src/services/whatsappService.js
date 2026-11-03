@@ -188,39 +188,41 @@ async function notifyClinicalTeamSimultaneously({
   docMessage,
   nurseMessage,
 }) {
-  const dispatches = [];
+  let docResult = null;
+  let nurseResult = null;
 
+  // 1. Dispatch to Doctor
   if (doctorPhone) {
-    dispatches.push(
-      sendWhatsAppMessage({
+    try {
+      const res = await sendWhatsAppMessage({
         phone: doctorPhone,
         message: docMessage,
         role: "doctor",
-      }).then((res) => ({ target: "doctor", recipient: doctorName, phone: doctorPhone, ...res }))
-    );
+      });
+      docResult = { target: "doctor", recipient: doctorName, phone: doctorPhone, ...res };
+    } catch (err) {
+      docResult = { target: "doctor", recipient: doctorName, phone: doctorPhone, success: false, error: err.message };
+    }
   } else {
-    dispatches.push(
-      Promise.resolve({ target: "doctor", recipient: doctorName || "Attending", success: false, error: "No phone registered" })
-    );
+    docResult = { target: "doctor", recipient: doctorName || "Attending", success: false, error: "No phone registered" };
   }
 
+  // 2. Brief 350ms throttle to prevent gateway duplicate/concurrency rejections
   if (nursePhone) {
-    dispatches.push(
-      sendWhatsAppMessage({
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    try {
+      const res = await sendWhatsAppMessage({
         phone: nursePhone,
         message: nurseMessage,
         role: "nurse",
-      }).then((res) => ({ target: "nurse", recipient: nurseName, phone: nursePhone, ...res }))
-    );
+      });
+      nurseResult = { target: "nurse", recipient: nurseName, phone: nursePhone, ...res };
+    } catch (err) {
+      nurseResult = { target: "nurse", recipient: nurseName, phone: nursePhone, success: false, error: err.message };
+    }
   } else {
-    dispatches.push(
-      Promise.resolve({ target: "nurse", recipient: nurseName || "Duty Nurse", success: false, error: "No phone registered" })
-    );
+    nurseResult = { target: "nurse", recipient: nurseName || "Duty Nurse", success: false, error: "No phone registered" };
   }
-
-  const results = await Promise.allSettled(dispatches);
-  const docResult = results[0]?.status === "fulfilled" ? results[0].value : { success: false, error: results[0]?.reason };
-  const nurseResult = results[1]?.status === "fulfilled" ? results[1].value : { success: false, error: results[1]?.reason };
 
   console.log(`[WhatsApp Service] Simultaneous Team Dispatch Completed -> Doctor: ${docResult.success ? "✓" : "✗"} | Nurse: ${nurseResult.success ? "✓" : "✗"}`);
 

@@ -10,11 +10,11 @@
 
 const { GoogleGenAI } = require("@google/genai");
 
-// Resilient model cascade: prioritizing premier models with high-throughput flash-lite fallbacks
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-3.6-flash";
+// Resilient model cascade: prioritizing high-throughput flash-lite models
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || "gemini-flash-lite-latest";
 const FALLBACK_MODELS = [
-  "gemini-3.6-flash",
   "gemini-flash-lite-latest",
+  "gemini-3.6-flash",
   "gemini-3.5-flash-lite",
   "gemini-3.1-flash-lite",
   "gemini-3.8-flash",

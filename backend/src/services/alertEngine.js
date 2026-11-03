@@ -82,16 +82,18 @@ async function checkThresholds(reading, io) {
         }
 
         // If an unacknowledged alert exists:
-        // Update its latest reading. If the team was already notified within the cooldown window,
-        // update the document and skip duplicate dispatch.
+        // Update its latest reading. If the condition escalates from warning to critical,
+        // bypass the cooldown and dispatch immediately.
         if (alert) {
+          const previousSeverity = alert.severity;
           alert.value = value;
           alert.timestamp = new Date();
           alert.severity = result.severity;
           alert.condition = result.condition;
 
+          const isEscalating = previousSeverity === "warning" && result.severity === "critical";
           const lastNotified = alert.teamNotifiedAt ? new Date(alert.teamNotifiedAt).getTime() : 0;
-          if (lastNotified && Date.now() - lastNotified < cooldownMs) {
+          if (!isEscalating && lastNotified && Date.now() - lastNotified < cooldownMs) {
             try { await alert.save(); } catch (e) { /* non-blocking */ }
             continue;
           }

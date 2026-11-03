@@ -73,7 +73,15 @@ export default function Dashboard() {
   }, []);
 
   const onAlert = useCallback((alert) => {
-    setAlerts((prev) => (prev.some((a) => a._id === alert._id) ? prev : [alert, ...prev].slice(0, 20)));
+    setAlerts((prev) => {
+      const idx = prev.findIndex((a) => String(a._id) === String(alert._id));
+      if (idx !== -1) {
+        const updated = [...prev];
+        updated[idx] = { ...updated[idx], ...alert };
+        return updated;
+      }
+      return [alert, ...prev].slice(0, 20);
+    });
   }, []);
 
   // Keep every open screen in sync when someone else acknowledges an alert, or
