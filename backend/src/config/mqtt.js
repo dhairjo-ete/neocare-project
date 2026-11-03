@@ -95,7 +95,14 @@ function connectMQTT(io) {
         if (!scope.hasActivePatient) {
           // Broadcast a standby signal so the frontend can show the bed as empty
           if (scope.hospitalId) {
-            io.to(`room:hospital:${scope.hospitalId}`).to("room:system_admin").emit("incubator:standby", {
+            io.to(`room:hospital:${scope.hospitalId}`).emit("incubator:standby", {
+              device_id: data.device_id,
+              incubatorStatus: scope.incubatorStatus || "active",
+              reason: scope.incubatorStatus !== "active"
+                ? `Incubator is ${scope.incubatorStatus}`
+                : "No patient admitted to this incubator",
+            });
+            io.to("room:system_admin").emit("incubator:standby", {
               device_id: data.device_id,
               incubatorStatus: scope.incubatorStatus || "active",
               reason: scope.incubatorStatus !== "active"
@@ -132,7 +139,8 @@ function connectMQTT(io) {
       if (topic.endsWith("/status")) {
         const scope = await resolveIncubatorScope(data.device_id);
         if (scope.hospitalId) {
-          io.to(`room:hospital:${scope.hospitalId}`).to("room:system_admin").emit("device:status", data);
+          io.to(`room:hospital:${scope.hospitalId}`).emit("device:status", data);
+          io.to("room:system_admin").emit("device:status", data);
         } else {
           io.emit("device:status", data);
         }

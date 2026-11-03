@@ -459,16 +459,21 @@ function applyTwinActuators(deviceId, controlSettings) {
  */
 function setSimulationScenario(deviceId, scenario) {
   const normScenario = scenario ? String(scenario).toLowerCase().trim() : null;
+  const targetScenario = normScenario === "normal" ? null : normScenario;
+
   if (!deviceId || deviceId === "__all__") {
-    forcedAnomalies.set("__all__", normScenario === "normal" ? null : normScenario);
+    forcedAnomalies.clear();
+    if (targetScenario) {
+      forcedAnomalies.set("__all__", targetScenario);
+    }
     for (const twin of physioRegistry.values()) {
-      twin.startAnomaly(normScenario === "normal" ? null : normScenario);
+      twin.startAnomaly(targetScenario);
     }
     resetAlertDebounce("__all__");
   } else {
-    forcedAnomalies.set(deviceId, normScenario === "normal" ? null : normScenario);
+    forcedAnomalies.set(deviceId, targetScenario);
     const twin = physioRegistry.get(deviceId);
-    if (twin) twin.startAnomaly(normScenario === "normal" ? null : normScenario);
+    if (twin) twin.startAnomaly(targetScenario);
     resetAlertDebounce(deviceId);
   }
 }

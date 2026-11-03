@@ -241,7 +241,11 @@ Return STRICTLY a JSON object without markdown fences matching:
 
       const response = await Promise.race([apiPromise, timeoutPromise]);
       const rawText = response.text ? response.text.trim() : "";
-      const cleanJson = rawText.replace(/^```json\s*/i, "").replace(/```\s*$/i, "").trim();
+      let cleanJson = rawText;
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        cleanJson = jsonMatch[0];
+      }
       const parsed = JSON.parse(cleanJson);
 
       const clinicalImpression = parsed.impression || `${result.condition}: ${paramLabel} at ${value}`;
